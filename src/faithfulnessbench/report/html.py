@@ -151,6 +151,12 @@ def build_figures(report: dict) -> dict[str, str]:
             xmax=xmax, ymin=0.5, ymax=1.0, baseline=0.5,
         )
 
+    if "calibration" in val:
+        figures["reliability"] = svg.reliability_diagram(
+            val["calibration"]["reliability"],
+            title=f"Reliability of the combined monitor (noised, ECE={val['calibration']['ece_combined']:.3f})",
+        )
+
     return figures
 
 
@@ -216,7 +222,16 @@ def render_report(report: dict) -> str:
             parts.append(f"<div class='kpi'><div class='v'>{mon['catch_rate_blatant']:.2f}</div><div class='l'>catch-rate @ ≤{pct}% FPR — blatant</div></div>")
             parts.append(f"<div class='kpi'><div class='v'>{mon['catch_rate_subtle']:.2f}</div><div class='l'>catch-rate @ ≤{pct}% FPR — subtle</div></div>")
             parts.append("</div>")
-        parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div></div>")
+        cal_extra = ""
+        if "calibration" in val and "reliability" in figures:
+            cal = val["calibration"]
+            cal_extra = (
+                f"<div>{figures['reliability']}</div>"
+            )
+            parts.append(f"<p class='lead'>Calibration (ECE) of the combined monitor on the noised substrate is "
+                         f"<strong>{cal['ece_combined']:.3f}</strong> (equal-width bins, near-worst-case for the clean 0/1-clustered scores, so measured on noise). "
+                         "The reliability diagram shows predicted vs. observed unfaithfulness.</p>")
+        parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div>{cal_extra}</div>")
         parts.append("</section>")
 
     # Section 2 — orthogonality

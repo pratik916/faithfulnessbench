@@ -166,6 +166,33 @@ def run_validation(
         f"would have cleared it. That is why the unit of measurement is a card, not a scalar."
     )
 
+    # --- calibration (ECE + reliability) on the NOISY substrate. The clean dials cluster
+    #     scores at 0/1 (uninformative for ECE); noise spreads them so calibration means
+    #     something. Equal-width ECE is near worst-case for 0/1-clustered scores (fb-y2b.3).
+    CAL_NOISE = 0.3
+    cal_res = {
+        m.name: run_probes(m, problems, n_trials=n_trials)
+        for m in model_population(seed=seed, label_noise=CAL_NOISE)
+    }
+    cal_combined, cal_labels = [], []
+    for name, res in cal_res.items():
+        comb = np.vstack([res[p].scores for p in PROBE_ORDER]).mean(axis=0)
+        cal_combined.append(comb)
+        cal_labels.append(np.zeros(comb.size) if name == "faithful" else np.ones(comb.size))
+    cc, clab = np.concatenate(cal_combined), np.concatenate(cal_labels)
+    ece_per_probe = {}
+    for p in PROBE_ORDER:
+        fs, axs = cal_res["faithful"][p].scores, cal_res[AXIS_MODEL[p]][p].scores
+        ps = np.r_[fs, axs]
+        pl = np.r_[np.zeros(fs.size), np.ones(axs.size)]
+        ece_per_probe[p] = metrics.expected_calibration_error(ps, pl)
+    calibration = {
+        "noise": CAL_NOISE,
+        "ece_combined": metrics.expected_calibration_error(cc, clab),
+        "ece_per_probe": ece_per_probe,
+        "reliability": metrics.reliability_curve(cc, clab),
+    }
+
     # --- AUROC-vs-noise: targeted AUROC as a sensitivity MEASUREMENT, not just wiring.
     #     At zero noise it reproduces the wiring check (1.0); as symmetric label noise
     #     rises the synthetic classes overlap and AUROC falls toward chance — so the
@@ -236,6 +263,7 @@ def run_validation(
         "combined_auroc": combined_auroc,
         "single_mixed_auroc": single_mixed_auroc,
         "monitor": monitor,
+        "calibration": calibration,
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
     }

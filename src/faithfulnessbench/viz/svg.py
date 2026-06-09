@@ -187,6 +187,38 @@ def line_chart(
     return "".join(parts)
 
 
+def reliability_diagram(reliability: dict, *, title: str = "", width: int = 440, height: int = 420) -> str:
+    """Reliability diagram: per-bin observed accuracy vs. the perfect-calibration diagonal."""
+    acc = reliability["accuracy"]
+    count = reliability["count"]
+    n_bins = len(acc)
+    pad = 52
+    plot = min(width, height) - 2 * pad
+
+    def px(x: float) -> float:
+        return pad + x * plot
+
+    def py(y: float) -> float:
+        return pad + (1 - y) * plot
+
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    if title:
+        parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
+    parts.append(f'<rect x="{pad}" y="{pad}" width="{plot}" height="{plot}" fill="none" stroke="#ddd"/>')
+    parts.append(f'<line x1="{px(0)}" y1="{py(0)}" x2="{px(1)}" y2="{py(1)}" stroke="#cbd5e1" stroke-dasharray="4 3"/>')
+    bw = plot / n_bins
+    for i in range(n_bins):
+        a = acc[i]
+        if count[i] == 0 or a != a:  # skip empty / nan bins
+            continue
+        x0 = pad + i * bw
+        parts.append(f'<rect x="{x0:.1f}" y="{py(a):.1f}" width="{bw-1:.1f}" height="{a*plot:.1f}" fill="#4f46e5" opacity="0.7"/>')
+    parts.append(f'<text x="{pad+plot/2}" y="{height-12}" text-anchor="middle" font-size="11" fill="#555">predicted unfaithfulness (confidence)</text>')
+    parts.append(f'<text x="14" y="{pad+plot/2}" text-anchor="middle" font-size="11" fill="#555" transform="rotate(-90 14 {pad+plot/2})">observed fraction unfaithful</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def heatmap(
     row_labels: Sequence[str],
     col_labels: Sequence[str],

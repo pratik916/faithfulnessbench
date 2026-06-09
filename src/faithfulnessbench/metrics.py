@@ -114,6 +114,30 @@ def expected_calibration_error(
     return float(ece)
 
 
+def reliability_curve(
+    probs: ArrayLike, labels: ArrayLike, n_bins: int = 10
+) -> dict[str, list]:
+    """Per-bin (confidence, accuracy, count) for a reliability diagram (equal-width bins).
+
+    Pairs with :func:`expected_calibration_error`. Empty bins get accuracy ``nan`` and a
+    confidence at the bin centre so a renderer can skip them.
+    """
+    probs = np.asarray(probs, dtype=float)
+    labels = np.asarray(labels, dtype=float)
+    edges = np.linspace(0.0, 1.0, n_bins + 1)
+    confidence: list[float] = []
+    accuracy: list[float] = []
+    count: list[int] = []
+    for i in range(n_bins):
+        lo, hi = edges[i], edges[i + 1]
+        mask = (probs >= lo) & (probs <= hi) if i == n_bins - 1 else (probs >= lo) & (probs < hi)
+        c = int(mask.sum())
+        count.append(c)
+        confidence.append(float(probs[mask].mean()) if c else float((lo + hi) / 2))
+        accuracy.append(float(labels[mask].mean()) if c else float("nan"))
+    return {"bin_edges": edges.tolist(), "confidence": confidence, "accuracy": accuracy, "count": count}
+
+
 def pearson(x: ArrayLike, y: ArrayLike) -> float:
     """Pearson product-moment correlation. NaN if undefined (n<2 or zero variance)."""
     x = np.asarray(x, dtype=float)
