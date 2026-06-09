@@ -8,7 +8,12 @@ See ``docs/DESIGN.md`` for the methodology.
 """
 from __future__ import annotations
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
+try:  # single source of truth is the version in pyproject.toml
+    __version__ = _pkg_version("faithfulnessbench")
+except PackageNotFoundError:  # pragma: no cover - running from a source tree without install
+    __version__ = "0.0.0+unknown"
 
 # The full convenience API (Problem, Model, probes, build_card, ...) is re-exported
 # from `_api` once all submodules exist. We import it defensively so that, during

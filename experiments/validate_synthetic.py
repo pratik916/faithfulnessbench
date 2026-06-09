@@ -11,15 +11,14 @@ Run from the repo root (no API key required, fully deterministic):
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
 # Allow running straight from a checkout without installing.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from faithfulnessbench.report import write_figures, write_report  # noqa: E402
-from faithfulnessbench.validation import json_safe, run_validation, summarize  # noqa: E402
+from faithfulnessbench.artifacts import generate_artifacts  # noqa: E402
+from faithfulnessbench.validation import summarize  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,14 +33,12 @@ def main() -> int:
     ap.add_argument("--figures", default=str(ROOT / "docs" / "assets"))
     args = ap.parse_args()
 
-    report = run_validation(
+    # Same shared code path as `faithfulnessbench validate`, plus the SVG figures.
+    report = generate_artifacts(
         n_per_domain=args.n, seed=args.seed, n_trials=args.trials,
+        json_path=args.json, report_path=args.report, figures_dir=args.figures,
         reproduce_cmd="python experiments/validate_synthetic.py",
     )
-    Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.json).write_text(json.dumps(json_safe(report), indent=2))
-    write_report(report, args.report)
-    write_figures(report, args.figures)
 
     print(summarize(report))
     print(f"\nWrote results -> {args.json}")

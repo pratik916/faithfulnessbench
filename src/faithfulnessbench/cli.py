@@ -13,16 +13,27 @@ _DEFAULT_JSON = "experiments/results/results.json"
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
-    from .report import write_report
-    from .validation import json_safe, run_validation, summarize
+    from .artifacts import check_against_committed, generate_artifacts
+    from .validation import summarize
 
-    report = run_validation(
+    if args.check:
+        drift = check_against_committed(
+            args.json, n_per_domain=args.n, seed=args.seed, n_trials=args.trials,
+            reproduce_cmd="faithfulnessbench validate --check",
+        )
+        if drift:
+            print(f"VALIDATION DRIFT vs {args.json} (recomputed, not written):", file=sys.stderr)
+            for d in drift:
+                print(f"  {d}", file=sys.stderr)
+            return 1
+        print(f"OK: validation reproduces the committed {args.json} (headline numbers match).")
+        return 0
+
+    report = generate_artifacts(
         n_per_domain=args.n, seed=args.seed, n_trials=args.trials,
+        json_path=args.json, report_path=args.report,
         reproduce_cmd="faithfulnessbench validate",
     )
-    Path(args.json).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.json).write_text(json.dumps(json_safe(report), indent=2))
-    write_report(report, args.report)
     print(summarize(report))
     print(f"\nWrote results -> {args.json}")
     print(f"Wrote report  -> {args.report}")
@@ -77,6 +88,11 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--trials", type=int, default=5, help="trials per probe (default 5)")
     v.add_argument("--report", default=_DEFAULT_REPORT)
     v.add_argument("--json", default=_DEFAULT_JSON)
+    v.add_argument(
+        "--check", action="store_true",
+        help="recompute and diff the headline numbers against the committed results.json "
+             "without overwriting it; exit non-zero on drift",
+    )
     v.set_defaults(func=_cmd_validate)
 
     r = sub.add_parser("report", help="render the HTML report from an existing results.json")

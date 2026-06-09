@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-60%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![tests](https://img.shields.io/badge/tests-66%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -76,9 +76,10 @@ The [interactive report](report/faithfulness_report.html) includes a **trace vie
 
 ```bash
 python experiments/validate_synthetic.py   # writes results.json, the HTML report, and SVG figures
+faithfulnessbench validate --check          # recompute & verify the committed numbers — never overwrites
 ```
 
-Everything is seeded — the committed [`experiments/results/results.json`](experiments/results/results.json) and figures regenerate byte-for-(numerically-)identically.
+Everything is seeded — the committed [`experiments/results/results.json`](experiments/results/results.json) and figures regenerate byte-for-(numerically-)identically. `validate --check` recomputes the validation and diffs the **headline numbers** (problem/model counts, every AUROC, the Spearman correlation matrix, and per-model composite + per-probe faithfulness) against the committed file to an absolute tolerance of `1e-12`; it deliberately ignores provenance strings and the seeded bootstrap CIs, and exits non-zero on drift without touching the artifact. The exact-vs-ignored field policy lives in [`src/faithfulnessbench/artifacts.py`](src/faithfulnessbench/artifacts.py).
 
 ## Scoring a real model
 
