@@ -136,6 +136,57 @@ def roc_plot(
     return "".join(parts)
 
 
+def line_chart(
+    series: Sequence[tuple],
+    *,
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
+    xmax: float = 1.0,
+    ymin: float = 0.0,
+    ymax: float = 1.0,
+    baseline: float | None = None,
+    width: int = 440,
+    height: int = 420,
+) -> str:
+    """Overlay line series. Each series is ``(label, x_list, y_list, color)``."""
+    pad = 52
+    plot = min(width, height) - 2 * pad
+
+    def px(x: float) -> float:
+        return pad + (x / xmax) * plot if xmax else pad
+
+    def py(y: float) -> float:
+        span = (ymax - ymin) or 1.0
+        return pad + (1 - (y - ymin) / span) * plot
+
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    if title:
+        parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
+    parts.append(f'<rect x="{pad}" y="{pad}" width="{plot}" height="{plot}" fill="none" stroke="#ddd"/>')
+    for yv in (ymin, (ymin + ymax) / 2, ymax):
+        parts.append(f'<line x1="{pad}" y1="{py(yv):.1f}" x2="{pad+plot}" y2="{py(yv):.1f}" stroke="#f1f5f9"/>')
+        parts.append(f'<text x="{pad-6}" y="{py(yv)+3:.1f}" text-anchor="end" font-size="10" fill="#888">{yv:.2f}</text>')
+    if baseline is not None:
+        parts.append(f'<line x1="{pad}" y1="{py(baseline):.1f}" x2="{pad+plot}" y2="{py(baseline):.1f}" stroke="#cbd5e1" stroke-dasharray="4 3"/>')
+    parts.append(f'<text x="{pad}" y="{pad+plot+16:.1f}" text-anchor="middle" font-size="10" fill="#888">0</text>')
+    parts.append(f'<text x="{pad+plot}" y="{pad+plot+16:.1f}" text-anchor="middle" font-size="10" fill="#888">{xmax:g}</text>')
+    if xlabel:
+        parts.append(f'<text x="{pad+plot/2}" y="{height-12}" text-anchor="middle" font-size="11" fill="#555">{_esc(xlabel)}</text>')
+    if ylabel:
+        parts.append(f'<text x="14" y="{pad+plot/2}" text-anchor="middle" font-size="11" fill="#555" transform="rotate(-90 14 {pad+plot/2})">{_esc(ylabel)}</text>')
+    legend_y = pad + 8
+    for label, xs, ys, color in series:
+        pts = " ".join(f"{px(x):.1f},{py(y):.1f}" for x, y in zip(xs, ys))
+        parts.append(f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="2"/>')
+        for x, y in zip(xs, ys):
+            parts.append(f'<circle cx="{px(x):.1f}" cy="{py(y):.1f}" r="2.5" fill="{color}"/>')
+        parts.append(f'<text x="{pad+plot-6:.1f}" y="{legend_y:.1f}" text-anchor="end" font-size="11" fill="{color}">{_esc(label)}</text>')
+        legend_y += 16
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def heatmap(
     row_labels: Sequence[str],
     col_labels: Sequence[str],

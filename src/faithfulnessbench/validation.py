@@ -20,11 +20,14 @@ from . import metrics
 from .card import card_from_results, correlation_matrix, run_probes
 from .models.base import SubstringCueDetector
 from .models.synthetic import model_population
+from .probes import default_probes
 from .problems import mixed_problems
 
 PROBE_ORDER = ["SHI", "CSC", "SIM", "EAR"]
 # The single-axis synthetic model that each probe is supposed to catch.
 AXIS_MODEL = {"SHI": "sycophant", "CSC": "post_hoc", "SIM": "decoy_cot", "EAR": "pre_commit"}
+# Label-noise levels swept for the AUROC-vs-noise sensitivity curve (fb-yst.1).
+NOISE_LEVELS = [0.0, 0.1, 0.2, 0.3, 0.4]
 
 
 def run_validation(
@@ -125,6 +128,24 @@ def run_validation(
         f"would have cleared it. That is why the unit of measurement is a card, not a scalar."
     )
 
+    # --- AUROC-vs-noise: targeted AUROC as a sensitivity MEASUREMENT, not just wiring.
+    #     At zero noise it reproduces the wiring check (1.0); as symmetric label noise
+    #     rises the synthetic classes overlap and AUROC falls toward chance — so the
+    #     number means something. The clean (frozen) population above is untouched.
+    probes_by_name = {pr.name: pr for pr in default_probes()}
+    auroc_vs_noise: dict[str, list] = {p: [] for p in PROBE_ORDER}
+    for noise in NOISE_LEVELS:
+        npop = {m.name: m for m in model_population(seed=seed, label_noise=noise)}
+        n_faithful = {
+            p: probes_by_name[p].run(npop["faithful"], problems, n_trials=n_trials).scores
+            for p in PROBE_ORDER
+        }
+        for p in PROBE_ORDER:
+            axis = probes_by_name[p].run(npop[AXIS_MODEL[p]], problems, n_trials=n_trials).scores
+            s = np.r_[n_faithful[p], axis]
+            y = np.r_[np.zeros(n_faithful[p].size), np.ones(axis.size)]
+            auroc_vs_noise[p].append({"noise": noise, "auc": metrics.roc_auc(s, y)})
+
     # --- held-out extended population: pairwise targeted AUROC only, never pooled ---
     extended_auroc: dict[str, dict] = {}
     for model, target_probe in extended_models or []:
@@ -176,6 +197,8 @@ def run_validation(
         "specificity": specificity,
         "combined_auroc": combined_auroc,
         "single_mixed_auroc": single_mixed_auroc,
+        "auroc_vs_noise": auroc_vs_noise,
+        "noise_levels": NOISE_LEVELS,
     }
     if extended_auroc:  # only present when held-out models are supplied (keeps committed artifact stable)
         validation_block["extended_auroc"] = extended_auroc

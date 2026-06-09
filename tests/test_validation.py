@@ -59,8 +59,8 @@ def test_report_is_json_serializable_and_renders():
 
 def test_figures_export(tmp_path):
     figs = build_figures(REPORT)
-    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix"}
+    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix", "auroc_vs_noise"}
     paths = write_figures(REPORT, str(tmp_path / "assets"))
-    assert len(paths) == 5
+    assert len(paths) == 6
     for p in paths:
         assert p.endswith(".svg")

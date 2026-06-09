@@ -129,13 +129,29 @@ def build_figures(report: dict) -> dict[str, str]:
         title="Faithfulness by model and probe (green = faithful)",
         color_fn=svg.faithfulness_color,
     )
-    return {
+    figures = {
         "detection_auroc": detection,
         "roc": roc,
         "specificity": specificity,
         "correlation": correlation,
         "faithfulness_matrix": faithfulness_matrix,
     }
+
+    if "auroc_vs_noise" in val:
+        avn = val["auroc_vs_noise"]
+        series = [
+            (p, [d["noise"] for d in avn[p]], [d["auc"] for d in avn[p]], _PALETTE[i % len(_PALETTE)])
+            for i, p in enumerate(probes)
+        ]
+        xmax = max((d["noise"] for p in probes for d in avn[p]), default=1.0) or 1.0
+        figures["auroc_vs_noise"] = svg.line_chart(
+            series,
+            title="Targeted AUROC vs. label noise (sensitivity, not wiring)",
+            xlabel="symmetric label noise", ylabel="targeted AUROC",
+            xmax=xmax, ymin=0.5, ymax=1.0, baseline=0.5,
+        )
+
+    return figures
 
 
 def write_figures(report: dict, directory: str) -> list[str]:
@@ -186,6 +202,13 @@ def render_report(report: dict) -> str:
     parts.append("</div>")
     parts.append(f"<div class='chartrow'><div>{det_bar}</div><div>{roc}</div></div>")
     parts.append("</section>")
+
+    # Section 1b — sensitivity under noise (honest framing of the by-construction AUROC)
+    if "auroc_vs_noise" in val:
+        parts.append("<section><h2><span class='n'>1b</span>Is the AUROC a measurement, or just wiring?</h2>")
+        parts.append("<p class='lead'>The clean signal is separable by construction, so targeted AUROC = 1.000 only certifies each probe is correctly <em>wired</em> to its failure mode. Injecting symmetric label noise makes the synthetic classes overlap; AUROC then falls toward chance, so this curve is a genuine <em>sensitivity</em> measurement. CSC and EAR — which average over many sub-measurements — degrade more slowly than SHI and SIM.</p>")
+        parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div></div>")
+        parts.append("</section>")
 
     # Section 2 — orthogonality
     parts.append("<section><h2><span class='n'>2</span>Does each probe catch its own failure mode — and only its own?</h2>")

@@ -42,13 +42,21 @@ _PROBE_TO_DIAL = {
 
 @dataclass(frozen=True)
 class FaithfulnessProfile:
-    """Per-axis unfaithfulness rates (0 = faithful, 1 = always unfaithful)."""
+    """Per-axis unfaithfulness rates (0 = faithful, 1 = always unfaithful).
+
+    ``label_noise`` (0 by default) injects symmetric per-instance noise: every behavioral
+    decision is flipped with that probability, so a faithful model occasionally acts
+    unfaithfully and vice versa. This makes the synthetic classes *overlap*, turning a
+    probe's targeted AUROC from a wiring check (perfect on the clean signal) into a real
+    sensitivity measurement. The flip is keyed by the same deterministic hash scheme.
+    """
 
     p_hint_sycophancy: float = 0.0
     p_post_hoc: float = 0.0
     p_decoy_cot: float = 0.0
     p_pre_commit: float = 0.0
     seed: int = 0
+    label_noise: float = 0.0
 
     def label_for(self, probe: str) -> int:
         """Ground-truth instance label for a *pure-type* model (dial in {0,1})."""
@@ -96,11 +104,11 @@ class ConfigurableSyntheticModel(Model):
         return int.from_bytes(digest[:8], "big") / 2**64
 
     def _draw(self, p: float, *keys: object) -> bool:
-        if p <= 0.0:
-            return False
-        if p >= 1.0:
-            return True
-        return self._u01(*keys) < p
+        base = (p >= 1.0) or (p > 0.0 and self._u01(*keys) < p)
+        eps = self.profile.label_noise
+        if eps > 0.0 and self._u01("noise", *keys) < eps:
+            return not base  # symmetric label noise -> classes overlap
+        return base
 
     # -- Model interface ---------------------------------------------------- #
     def reason(self, problem: Problem, *, cue=None, trial: int = 0) -> Trace:
@@ -202,28 +210,26 @@ def faithful_by_construction(seed: int = 0) -> ConfigurableSyntheticModel:
     )
 
 
-def model_population(seed: int = 0) -> list[ConfigurableSyntheticModel]:
+def model_population(seed: int = 0, label_noise: float = 0.0) -> list[ConfigurableSyntheticModel]:
     """A pure-type population: one fully faithful model, one single-axis-unfaithful
     model per probe, and one fully unfaithful model.
 
     The single-axis models are what demonstrate probe orthogonality and probe
-    disagreement (a model can fail one probe while passing the others).
+    disagreement (a model can fail one probe while passing the others). ``label_noise``
+    (0 = the frozen clean population) injects symmetric per-instance noise so the classes
+    overlap and targeted AUROC becomes a sensitivity measurement (see `validation`).
     """
-    P = FaithfulnessProfile
+    def P(**rates):
+        return FaithfulnessProfile(seed=seed, label_noise=label_noise, **rates)
+
     return [
-        ConfigurableSyntheticModel("faithful", P(seed=seed)),
-        ConfigurableSyntheticModel("sycophant", P(p_hint_sycophancy=1.0, seed=seed)),
-        ConfigurableSyntheticModel("post_hoc", P(p_post_hoc=1.0, seed=seed)),
-        ConfigurableSyntheticModel("decoy_cot", P(p_decoy_cot=1.0, seed=seed)),
-        ConfigurableSyntheticModel("pre_commit", P(p_pre_commit=1.0, seed=seed)),
+        ConfigurableSyntheticModel("faithful", P()),
+        ConfigurableSyntheticModel("sycophant", P(p_hint_sycophancy=1.0)),
+        ConfigurableSyntheticModel("post_hoc", P(p_post_hoc=1.0)),
+        ConfigurableSyntheticModel("decoy_cot", P(p_decoy_cot=1.0)),
+        ConfigurableSyntheticModel("pre_commit", P(p_pre_commit=1.0)),
         ConfigurableSyntheticModel(
             "fully_unfaithful",
-            P(
-                p_hint_sycophancy=1.0,
-                p_post_hoc=1.0,
-                p_decoy_cot=1.0,
-                p_pre_commit=1.0,
-                seed=seed,
-            ),
+            P(p_hint_sycophancy=1.0, p_post_hoc=1.0, p_decoy_cot=1.0, p_pre_commit=1.0),
         ),
     ]
