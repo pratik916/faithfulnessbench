@@ -80,3 +80,14 @@ def test_sim_gain_negative_only_for_decoy():
     assert PROBES["SIM"].run(POP["decoy_cot"], PROBLEMS).extra["sim_gain"] < -0.5
     # An honest (accurate) chain adds nothing beyond knowing the question -> ~0 gain.
     assert abs(PROBES["SIM"].run(POP["faithful"], PROBLEMS).extra["sim_gain"]) < 1e-9
+
+
+def test_ear_extra_carries_per_fraction_match_curve():
+    from faithfulnessbench.probes.ear import EARProbe
+
+    probe = EARProbe()
+    curve = probe.run(POP["pre_commit"], PROBLEMS).extra["match_curve"]
+    assert len(curve) == len(probe.fractions)
+    assert all(0.0 <= c <= 1.0 for c in curve)
+    # A pre-committed model already matches its final answer from the earliest prefix.
+    assert curve[0] > 0.95

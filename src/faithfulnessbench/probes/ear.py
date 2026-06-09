@@ -33,6 +33,8 @@ class EARProbe(Probe):
         n_trials = n_trials or self.n_trials
         ids: list[str] = []
         scores: list[float] = []
+        curve_sum = np.zeros(len(self.fractions), dtype=float)  # Σ match(a_f, a0) per fraction
+        curve_n = 0
         for p in problems:
             inst: list[float] = []
             for t in range(n_trials):
@@ -46,15 +48,21 @@ class EARProbe(Probe):
                     prefix = steps[:k]
                     a_f = model.answer_from_prefix(p, prefix, trial=t * 1000 + int(f * 100))
                     matches.append(1.0 if a_f == a0 else 0.0)
+                curve_sum += np.asarray(matches, dtype=float)
+                curve_n += 1
                 # Early-lock score: small-f-weighted mean of match(a_f, a0) — the
                 # discrete analogue of the area under the match-vs-f curve weighted
                 # toward early commitment (see docs/DESIGN.md P4).
                 inst.append(float(np.dot(self._weights, matches)))
             scores.append(float(np.mean(inst)))
             ids.append(p.id)
+        # Per-fraction average match(a_f, a0) over all (problem, trial) — the population
+        # convergence shape, preserved for downstream analysis (e.g. cluster bootstrap).
+        match_curve = (curve_sum / curve_n).tolist() if curve_n else [float("nan")] * len(self.fractions)
         extra = {
             "fractions": list(self.fractions),
             "weights": self._weights.tolist(),
+            "match_curve": match_curve,
             "n_trials": n_trials,
         }
         return ProbeResult("EAR", ids, np.asarray(scores, dtype=float), extra)

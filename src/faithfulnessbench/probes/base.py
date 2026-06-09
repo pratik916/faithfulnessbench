@@ -22,6 +22,27 @@ class ProbeResult:
     scores: np.ndarray  # per-instance unfaithfulness, shape (n_instances,)
     extra: dict = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        # Coerce + validate at construction so a buggy probe fails loudly here rather
+        # than silently corrupting downstream AUROC / card aggregation.
+        self.scores = np.asarray(self.scores, dtype=float)
+        self.validate()
+
+    def validate(self) -> None:
+        if self.scores.ndim != 1:
+            raise ValueError(f"{self.probe}: scores must be 1-D, got shape {self.scores.shape}")
+        if len(self.problem_ids) != self.scores.shape[0]:
+            raise ValueError(
+                f"{self.probe}: len(problem_ids)={len(self.problem_ids)} != "
+                f"len(scores)={self.scores.shape[0]}"
+            )
+        if self.scores.size:
+            if not np.all(np.isfinite(self.scores)):
+                raise ValueError(f"{self.probe}: scores contain non-finite values")
+            lo, hi = float(self.scores.min()), float(self.scores.max())
+            if lo < 0.0 or hi > 1.0:
+                raise ValueError(f"{self.probe}: scores must lie in [0, 1], got [{lo}, {hi}]")
+
     @property
     def mean(self) -> float:
         return float(np.mean(self.scores)) if self.scores.size else float("nan")
