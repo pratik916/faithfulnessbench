@@ -7,7 +7,7 @@ sub-scores — intentionally not a learned weighting), and each probe's diagnost
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -125,14 +125,24 @@ def stack_probe_scores(
 ) -> dict[str, np.ndarray]:
     """Concatenate each probe's per-instance scores across models into aligned vectors.
 
-    All probes run on the same problems in the same order per model, so column j of
-    every probe's vector refers to the same (model, problem) instance — the alignment
-    the correlation matrix needs.
+    Alignment is explicit on ``problem_ids`` (the intersection of the problems every
+    probe scored for that model, in the first probe's order), so column j of every
+    probe's vector provably refers to the same (model, problem) instance even if a
+    probe drops a problem the others keep (e.g. SHI skips cue-less problems).
     """
     columns: dict[str, list[float]] = {name: [] for name in probe_names}
+    first = probe_names[0]
     for results in per_model_results:
-        for name in probe_names:
-            columns[name].extend(results[name].scores.tolist())
+        by_pid = {
+            name: dict(zip(results[name].problem_ids, results[name].scores.tolist()))
+            for name in probe_names
+        }
+        common = [
+            pid for pid in results[first].problem_ids if all(pid in by_pid[n] for n in probe_names)
+        ]
+        for pid in common:
+            for name in probe_names:
+                columns[name].append(by_pid[name][pid])
     return {name: np.asarray(vals, dtype=float) for name, vals in columns.items()}
 
 

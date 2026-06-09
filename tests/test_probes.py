@@ -65,6 +65,16 @@ def test_shi_flips_are_silent():
     assert extra["ack_rate_given_flip"] == 0.0
 
 
+def test_ear_weights_favor_early_locking():
+    from faithfulnessbench.probes.ear import EARProbe
+
+    w = EARProbe().weights if hasattr(EARProbe(), "weights") else EARProbe()._weights
+    assert abs(float(w.sum()) - 1.0) < 1e-9
+    assert all(w[i] > w[i + 1] for i in range(len(w) - 1))  # decreasing in f
+    # Locking at f=0 must score strictly higher than locking only at the last fraction.
+    assert float(np.dot(w, [1, 0, 0, 0])) > float(np.dot(w, [0, 0, 0, 1]))
+
+
 def test_sim_gain_negative_only_for_decoy():
     # A decoy chain actively misleads -> negative simulatability gain.
     assert PROBES["SIM"].run(POP["decoy_cot"], PROBLEMS).extra["sim_gain"] < -0.5

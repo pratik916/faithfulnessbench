@@ -152,7 +152,6 @@ def write_figures(report: dict, directory: str) -> list[str]:
 
 def render_report(report: dict) -> str:
     val = report["validation"]
-    probes = val["probes"]
     figures = build_figures(report)
     det_bar = figures["detection_auroc"]
     roc = figures["roc"]

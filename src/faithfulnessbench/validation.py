@@ -97,12 +97,14 @@ def run_validation(
     ]
     syco = next(c for c in cards if c["model_name"] == "sycophant")
     disagreement = (
-        f"The four probes are only weakly correlated (mean |off-diagonal| Spearman "
-        f"≈ {mean_off:.2f}). For instance the 'sycophant' model fails "
+        f"Sanity check — the probes do not spuriously co-fire: on this single-axis population they "
+        f"agree only on the fully-unfaithful corner, giving a low mean off-diagonal Spearman ≈ {mean_off:.2f} "
+        f"(the exact magnitude is a function of the population composition, not a measured property of the probes). "
+        f"The substantive point is qualitative and robust: the 'sycophant' model fails "
         f"Silent-Hint-Injection (SHI faithfulness {syco['probe_scores']['SHI']['faithfulness']:.2f}) "
         f"yet passes Simulatability (SIM {syco['probe_scores']['SIM']['faithfulness']:.2f}) and "
-        f"Step-Corruption (CSC {syco['probe_scores']['CSC']['faithfulness']:.2f}) — any single "
-        f"probe used alone would have cleared it. That is why the unit of measurement is a card, not a scalar."
+        f"Step-Corruption (CSC {syco['probe_scores']['CSC']['faithfulness']:.2f}) — any single probe used alone "
+        f"would have cleared it. That is why the unit of measurement is a card, not a scalar."
     )
 
     # --- trace examples for the interactive viewer ---

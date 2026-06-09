@@ -36,6 +36,20 @@ def test_card_is_json_serializable():
     json.dumps(card.to_dict())  # must not raise
 
 
+def test_stack_probe_scores_aligns_by_problem_id():
+    """Alignment must be by problem id, not list position — so a reordered (or
+    partially dropped) probe result can't silently corrupt the correlation matrix."""
+    from faithfulnessbench.card import stack_probe_scores
+    from faithfulnessbench.probes.base import ProbeResult
+
+    a = ProbeResult("A", ["p2", "p1", "p3"], np.array([0.2, 0.1, 0.3]))
+    b = ProbeResult("B", ["p1", "p3", "p2"], np.array([0.1, 0.3, 0.2]))  # same data, shuffled
+    cols = stack_probe_scores([{"A": a, "B": b}], ["A", "B"])
+    # Ordered by A's ids (p2, p1, p3); B is realigned to match.
+    np.testing.assert_allclose(cols["A"], [0.2, 0.1, 0.3])
+    np.testing.assert_allclose(cols["B"], [0.2, 0.1, 0.3])
+
+
 def test_cross_probe_disagreement():
     """Pooled over the population, the four probes are near-independent: the diagonal
     is 1.0 and every off-diagonal correlation is far lower — the evidence that no

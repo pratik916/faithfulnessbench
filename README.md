@@ -16,7 +16,7 @@ Measuring faithfulness is hard because it's a **counterfactual claim about an un
 
 ## Headline result
 
-> On a seeded population of 6 synthetic models × 40 problems, **every probe detects the unfaithfulness it targets at AUROC = 1.000**, while staying at chance (~0.5) on the failure modes it does *not* target. A **combined detector reaches AUROC 1.000** for flagging *any* unfaithfulness — but the **best single probe manages only 0.700** at the same task. The four probes are weakly correlated (mean off-diagonal Spearman ≈ 0.25): a model can fail one probe and pass the others. **Faithfulness is not a scalar — it's a card.**
+> On a seeded population of 6 synthetic models × 40 problems, **every probe detects the unfaithfulness it targets at AUROC = 1.000**, with **exactly zero leakage** onto the failure modes it does *not* target (off-axis AUROC = 0.500 — the tie convention's value when a probe returns identically zero). A **combined detector reaches AUROC 1.000** for flagging *any* unfaithfulness — but the **best single probe manages only 0.700** at the same task. And the probes genuinely disagree: a model can fail one probe and pass the others. **Faithfulness is not a scalar — it's a card.**
 
 <p align="center">
   <img src="docs/assets/detection_auroc.svg" width="48%" alt="Detection AUROC per probe">
@@ -32,7 +32,7 @@ Each probe consumes a model and a set of problems and returns a continuous **unf
 | Probe | Failure mode it catches | How it intervenes |
 |---|---|---|
 | **SHI** — Silent Hint Injection | The answer is driven by a cue the CoT never admits to | Plant a hint pointing at a wrong target; flag cases where the answer flips to the hint but the CoT never mentions it |
-| **CSC** — CoT Step Corruption | The CoT isn't load-bearing; corrupting it doesn't change the answer | Surface-preservingly perturb an operand and re-derive; faithful reasoning tracks the change, post-hoc reasoning doesn't |
+| **CSC** — CoT Step Corruption | The CoT isn't load-bearing; corrupting it doesn't change the answer | Perturb an operand (format-class-preserving) and re-derive; faithful reasoning tracks the change, post-hoc reasoning doesn't |
 | **SIM** — Counterfactual Simulatability | The CoT doesn't let an observer predict the answer | A simulator predicts the answer from the CoT *alone* (leakage-controlled: it can't re-solve the question) |
 | **EAR** — Early-Answering / Reasoning-Reliance | The model committed to the answer before the CoT did any work | Truncate the CoT at increasing fractions; faithful answers only converge as reasoning is revealed |
 
@@ -58,7 +58,7 @@ Because the dials are code, every `(model, problem)` carries a **known label**. 
   <img src="docs/assets/faithfulness_matrix.svg" width="52%" alt="Faithfulness by model and probe">
 </p>
 
-Pooled over the population, the probes are **weakly correlated** (left) — they agree only at the faithful / fully-unfaithful extremes and disagree on single-axis models. The faithfulness matrix (right) shows it directly: the **`sycophant`** model scores **0.00 on SHI but 1.00 on SIM and CSC**. Any single probe used alone would have cleared it. That's the case for reporting a **Faithfulness Card** — four sub-scores plus a transparent composite (the mean — intentionally not a learned weighting) — rather than a single faithfulness number.
+The correlation matrix (left) is a **sanity check that the probes don't spuriously co-fire**: on this single-axis population they agree only on the fully-unfaithful corner, so off-diagonal correlation is low (≈ 0.25 — a value set by the *population composition*, not a measured property of the probes, so it's a diagnostic rather than a headline number). The substantive, robust point is the faithfulness matrix on the right: the **`sycophant`** model scores **0.00 on SHI but 1.00 on SIM and CSC** — any single probe used alone would have cleared it. That's the case for reporting a **Faithfulness Card** — four sub-scores plus a transparent composite (the mean — intentionally not a learned weighting) — rather than a single faithfulness number.
 
 ## Quickstart
 
