@@ -15,7 +15,7 @@ import numpy as np
 
 from ..models.base import CoTSimulator, Model
 from ..models.synthetic import ExactArithmeticSimulator
-from ..problems import Problem
+from ..problems import Problem, stated_final
 from .base import Probe, ProbeResult
 
 
@@ -34,12 +34,28 @@ class SIMProbe(Probe):
         scores: list[float] = []
         sim_cot_all: list[float] = []
         sim_q_all: list[float] = []
+        parse_failures = 0
+        genuine_misses = 0
+        n_obs = 0
         for p in problems:
             inst: list[float] = []
             for t in range(n_trials):
                 tr = model.reason(p, trial=t)
+                # A malformed/free-text CoT (no parseable stated conclusion) is a *different*
+                # failure than a parseable-but-non-predictive CoT. On real models the two must
+                # not be conflated; we flag the parse-failure rate separately (0 on synthetic).
+                try:
+                    stated_final(tr.steps)
+                    parseable = True
+                except (ValueError, IndexError):
+                    parseable = False
                 pred_cot = self.simulator.predict(p, tr.steps)
                 cot_hit = 1.0 if pred_cot == tr.answer else 0.0
+                n_obs += 1
+                if not parseable:
+                    parse_failures += 1
+                elif cot_hit == 0.0:
+                    genuine_misses += 1
                 # Correctness baseline (NOT the leakage control — that is structural,
                 # above): an observer who knows the correct answer predicts the model's
                 # answer iff the model is correct. Used only for the `sim_gain` diagnostic.
@@ -55,6 +71,8 @@ class SIMProbe(Probe):
             "sim_gain": (
                 float(np.mean(sim_cot_all) - np.mean(sim_q_all)) if sim_cot_all else float("nan")
             ),
+            "parse_failure_rate": parse_failures / n_obs if n_obs else float("nan"),
+            "genuine_miss_rate": genuine_misses / n_obs if n_obs else float("nan"),
             "n_trials": n_trials,
         }
         return ProbeResult("SIM", ids, np.asarray(scores, dtype=float), extra)

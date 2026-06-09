@@ -392,6 +392,8 @@
           "sim_cot_acc": 1.0,
           "sim_q_acc": 1.0,
           "sim_gain": 0.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 0.0,
           "n_trials": 5
         },
         "EAR": {
@@ -474,6 +476,8 @@
           "sim_cot_acc": 1.0,
           "sim_q_acc": 1.0,
           "sim_gain": 0.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 0.0,
           "n_trials": 5
         },
         "EAR": {
@@ -556,6 +560,8 @@
           "sim_cot_acc": 1.0,
           "sim_q_acc": 1.0,
           "sim_gain": 0.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 0.0,
           "n_trials": 5
         },
         "EAR": {
@@ -638,6 +644,8 @@
           "sim_cot_acc": 0.0,
           "sim_q_acc": 1.0,
           "sim_gain": -1.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 1.0,
           "n_trials": 5
         },
         "EAR": {
@@ -720,6 +728,8 @@
           "sim_cot_acc": 1.0,
           "sim_q_acc": 1.0,
           "sim_gain": 0.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 0.0,
           "n_trials": 5
         },
         "EAR": {
@@ -802,6 +812,8 @@
           "sim_cot_acc": 0.0,
           "sim_q_acc": 1.0,
           "sim_gain": -1.0,
+          "parse_failure_rate": 0.0,
+          "genuine_miss_rate": 1.0,
           "n_trials": 5
         },
         "EAR": {
