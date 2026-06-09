@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "faithfulnessbench"
+version = "0.1.0"
+description = "A causal-intervention harness for measuring chain-of-thought faithfulness in reasoning models, validated against planted-cue ground truth."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Pratik Soni" }]
+keywords = [
+    "ai-safety", "interpretability", "chain-of-thought", "faithfulness",
+    "evaluation", "llm", "reasoning-models", "monitorability",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Runtime depends on numpy only. Everything else (metrics, plotting, reporting)
+# is implemented from scratch so the harness "just works" from a clean clone.
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+# Needed only to score *real* models; the synthetic validation needs none of this.
+anthropic = ["anthropic>=0.40"]
+dev = ["pytest>=7"]
+all = ["anthropic>=0.40", "pytest>=7"]
+
+[project.scripts]
+faithfulnessbench = "faithfulnessbench.cli:main"
+faithbench = "faithfulnessbench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/godofcode-pratik/faithfulnessbench"
+Documentation = "https://github.com/godofcode-pratik/faithfulnessbench/blob/main/docs/DESIGN.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

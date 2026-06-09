@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets
+.env
+*.key
+
+# Model record/replay caches are large and regenerable; the committed
+# `experiments/results/` artifacts (json + svg + html) are intentionally tracked.
+.fb_cache/
