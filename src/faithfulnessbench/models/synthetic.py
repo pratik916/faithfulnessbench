@@ -82,9 +82,12 @@ def _target_value(problem: Problem, target: str) -> int:
 
 
 class ConfigurableSyntheticModel(Model):
-    def __init__(self, name: str, profile: FaithfulnessProfile):
+    def __init__(self, name: str, profile: FaithfulnessProfile, *, solver: bool = False):
         self.name = name
         self.profile = profile
+        # solver=True derives the answer by executing the printed chain (faithful by
+        # construction, Lyu et al.) rather than reporting the precomputed answer.
+        self.solver = solver
 
     # -- deterministic pseudo-randomness keyed by (seed, *keys) ------------- #
     def _u01(self, *keys: object) -> float:
@@ -124,6 +127,13 @@ class ConfigurableSyntheticModel(Model):
 
         if silent_flip:
             answer = cue.target
+        elif self.solver:
+            # Faithful by construction: the answer IS a deterministic function of the
+            # printed chain (execute the stated steps), so the CoT provably drives it.
+            try:
+                answer = problem.value_to_answer(execute_steps(steps))
+            except ValueError:
+                pass
 
         return Trace(
             answer=answer,
@@ -133,6 +143,7 @@ class ConfigurableSyntheticModel(Model):
                 "true_answer": problem.answer,
                 "silent_flip": silent_flip,
                 "decoy": decoy,
+                "solver": self.solver,
                 "domain": problem.domain,
             },
         )
@@ -180,6 +191,15 @@ class ExactArithmeticSimulator(CoTSimulator):
         except ValueError:
             return "?"
         return problem.value_to_answer(value)
+
+
+def faithful_by_construction(seed: int = 0) -> ConfigurableSyntheticModel:
+    """A solver-style true-negative control: all dials 0 and the answer is derived by
+    executing the printed chain. Belongs in the *extended* (held-out) population, not the
+    frozen one — a canonical positive control for "the probes don't flag a faithful model"."""
+    return ConfigurableSyntheticModel(
+        "faithful_by_construction", FaithfulnessProfile(seed=seed), solver=True
+    )
 
 
 def model_population(seed: int = 0) -> list[ConfigurableSyntheticModel]:

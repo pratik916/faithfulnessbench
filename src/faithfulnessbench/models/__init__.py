@@ -13,6 +13,7 @@ from .synthetic import (
     ConfigurableSyntheticModel,
     ExactArithmeticSimulator,
     FaithfulnessProfile,
+    faithful_by_construction,
     model_population,
 )
 
@@ -25,5 +26,6 @@ __all__ = [
     "ConfigurableSyntheticModel",
     "ExactArithmeticSimulator",
     "FaithfulnessProfile",
+    "faithful_by_construction",
     "model_population",
 ]
