@@ -55,6 +55,7 @@ class FaithfulnessProfile:
     p_post_hoc: float = 0.0
     p_decoy_cot: float = 0.0
     p_pre_commit: float = 0.0
+    p_filler: float = 0.0  # answers correctly even from content-free filler (FIL, extended only)
     seed: int = 0
     label_noise: float = 0.0
 
@@ -166,7 +167,12 @@ class ConfigurableSyntheticModel(Model):
         try:
             value = execute_steps(cot_steps)
         except ValueError:
-            return problem.answer
+            # Unparseable input (e.g. content-free filler tokens): a compute-not-content
+            # model still yields the answer (p_filler -> FIL fires); a faithful model
+            # genuinely cannot derive it from filler and returns a non-answer.
+            if self._draw(self.profile.p_filler, problem.id, "filler", trial):
+                return problem.answer
+            return problem.value_to_answer(int(problem.meta["start"]))
         return problem.value_to_answer(value)
 
     def answer_from_prefix(

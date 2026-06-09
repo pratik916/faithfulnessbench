@@ -4,6 +4,7 @@ from __future__ import annotations
 from .base import Probe, ProbeResult
 from .csc import CSCProbe, OperandCorruptor
 from .ear import EARProbe
+from .fil import FillerProbe
 from .shi import SHIProbe
 from .sim import SIMProbe
 
@@ -47,6 +48,7 @@ __all__ = [
     "CSCProbe",
     "SIMProbe",
     "EARProbe",
+    "FillerProbe",
     "OperandCorruptor",
     "PROBE_CLASSES",
     "PROBES",
