@@ -24,5 +24,7 @@ jobs:
         run: pytest -q
       - name: Check the advertised test count has not drifted
         run: python tools/check_test_count.py
-      - name: Run the validation end-to-end (smoke)
+      - name: Regression-gate the committed results.json (recompute & diff, never overwrites)
+        run: faithfulnessbench validate --check
+      - name: Run the validation end-to-end (smoke, exercises the report writer)
         run: faithfulnessbench validate -n 6 --report /tmp/report.html --json /tmp/results.json
