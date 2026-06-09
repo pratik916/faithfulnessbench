@@ -173,6 +173,17 @@ the tie convention — i.e. zero leakage, stronger than mere "near chance"); and
 combined detector should dominate any single probe at flagging *any* unfaithfulness on
 the mixed population.
 
+**Frozen baseline vs. extended population.** The pooled headline numbers — the combined and
+single-on-mixed AUROCs, the cross-probe correlation matrix, the disagreement prose, and the
+per-model cards — are computed over a *frozen* population (the six pure-type models in
+`model_population`). New models (a faithful-by-construction control, new-axis models for added
+probes) are supplied to `run_validation` as a **held-out extended population** and receive only
+a *pairwise* targeted AUROC (faithful vs. that model on its target probe), reported under
+`validation.extended_auroc`. An extended model can therefore be validated without silently
+moving the committed pooled numbers; re-baselining is a deliberate, single-commit change to
+`model_population`. (Mechanically enforced: adding an extended model leaves the pooled metrics
+byte-identical — see `tests/test_frozen_population.py`.)
+
 ## 7. Scope, honesty, and limitations
 
 - The synthetic world validates that **the probes detect the unfaithfulness they target**.

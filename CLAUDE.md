@@ -10,7 +10,7 @@ FaithfulnessBench measures chain-of-thought (CoT) **faithfulness** in reasoning 
 
 ```bash
 pip install -e ".[dev]"                       # install with test deps
-pytest                                         # full suite (80 tests, no network/key)
+pytest                                         # full suite (82 tests, no network/key)
 pytest tests/test_probes.py -q                 # one file
 pytest tests/test_metrics.py::test_auc_known_value  # one test
 faithfulnessbench validate                     # headline experiment -> results.json + report + figures

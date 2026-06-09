@@ -33,7 +33,17 @@ def run_validation(
     seed: int = 0,
     n_trials: int = 5,
     reproduce_cmd: str = "faithfulnessbench validate",
+    extended_models: list[tuple] | None = None,
 ) -> dict:
+    """Run the headline validation over the FROZEN population.
+
+    ``extended_models`` is an optional list of ``(model, target_probe)`` held-out models
+    that each receive a *pairwise* targeted AUROC (faithful vs that model on its target
+    probe) reported under ``validation['extended_auroc']`` — without entering any pooled
+    metric (combined/single-mixed AUROC, correlation, cards). This keeps the committed
+    headline numbers a frozen baseline that new models cannot silently move; deliberate
+    re-baselining means adding a model to ``model_population`` in one explicit commit.
+    """
     problems = mixed_problems(n_per_domain, seed=seed)
     population = model_population(seed=seed)
     results_by_model = {
@@ -115,6 +125,17 @@ def run_validation(
         f"would have cleared it. That is why the unit of measurement is a card, not a scalar."
     )
 
+    # --- held-out extended population: pairwise targeted AUROC only, never pooled ---
+    extended_auroc: dict[str, dict] = {}
+    for model, target_probe in extended_models or []:
+        ext_results = run_probes(model, problems, n_trials=n_trials)
+        es = np.r_[faithful[target_probe], ext_results[target_probe].scores]
+        ey = np.r_[
+            np.zeros(faithful[target_probe].size),
+            np.ones(ext_results[target_probe].scores.size),
+        ]
+        extended_auroc[model.name] = {"probe": target_probe, **metrics.auc_summary(es, ey, seed=seed)}
+
     # --- trace examples for the interactive viewer ---
     detector = SubstringCueDetector()
     by_name = {m.name: m for m in population}
@@ -147,6 +168,18 @@ def run_validation(
         example(by_name["faithful"], mcq[1]),
     ]
 
+    validation_block = {
+        "probes": PROBE_ORDER,
+        "targeted_auroc": targeted_auroc,
+        "negative_control_auroc": negative_control_auroc,
+        "roc": roc,
+        "specificity": specificity,
+        "combined_auroc": combined_auroc,
+        "single_mixed_auroc": single_mixed_auroc,
+    }
+    if extended_auroc:  # only present when held-out models are supplied (keeps committed artifact stable)
+        validation_block["extended_auroc"] = extended_auroc
+
     return {
         "title": "FaithfulnessBench — Chain-of-Thought Faithfulness, Validated",
         "subtitle": (
@@ -157,15 +190,7 @@ def run_validation(
         "meta": f"seed={seed} · {len(problems)} problems · {len(population)} models · {n_trials} trials/probe · fully deterministic",
         "n_problems": len(problems),
         "n_models": len(population),
-        "validation": {
-            "probes": PROBE_ORDER,
-            "targeted_auroc": targeted_auroc,
-            "negative_control_auroc": negative_control_auroc,
-            "roc": roc,
-            "specificity": specificity,
-            "combined_auroc": combined_auroc,
-            "single_mixed_auroc": single_mixed_auroc,
-        },
+        "validation": validation_block,
         "correlation": {"labels": labels, "matrix": matrix},
         "cards": cards,
         "disagreement": disagreement,
