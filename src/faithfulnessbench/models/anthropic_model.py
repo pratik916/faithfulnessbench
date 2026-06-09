@@ -12,6 +12,13 @@ supplied reasoning instead of re-deriving). Two design choices keep it usable:
 
 Requires ``pip install "faithfulnessbench[anthropic]"`` and ``ANTHROPIC_API_KEY`` to hit
 a live model. See docs/DESIGN.md §7 for the assumptions this path makes.
+
+**Honest caveat (read before scoring a real model).** The exact `ExactArithmeticSimulator`
+and `SubstringCueDetector` are synthetic-only: a real model emits *free-text* CoT, not the
+canonical ``L op R = V`` chain, so CSC's structural corruption and SIM's stated-conclusion
+parse degrade and must be swapped for the LLM-graded `LLMSimulator` / `LLMJudgeCueDetector`,
+whose own reliability is then a dependency (calibrated separately). Real-model numbers are
+therefore *descriptive*, reported without a ground-truth AUROC.
 """
 from __future__ import annotations
 

@@ -26,5 +26,28 @@ try:
     from ._api import __all__ as _api_all
 
     __all__ = ["__version__", "metrics", *_api_all]
-except Exception:  # pragma: no cover - only hit mid-build / partial installs
+except ImportError:  # pragma: no cover - only hit mid-build / partial installs
     __all__ = ["__version__", "metrics"]
+
+
+# The real-model adapter is an *optional* surface: importing it requires the `anthropic`
+# extra. We expose it lazily from the top level so `faithfulnessbench.AnthropicModel`
+# works when the extra is installed and degrades to a clear ImportError (never a silent
+# fallback) when it is not — while the submodule path stays importable for transport-seam
+# unit tests that need no SDK.
+_REAL_MODEL_EXPORTS = {"AnthropicModel", "LLMSimulator", "LLMJudgeCueDetector"}
+
+
+def __getattr__(name: str):  # PEP 562 module-level attribute hook
+    if name in _REAL_MODEL_EXPORTS:
+        try:
+            import anthropic  # noqa: F401
+        except ImportError as exc:
+            raise ImportError(
+                f"{name} needs the optional 'anthropic' dependency; install it with: "
+                'pip install "faithfulnessbench[anthropic]"'
+            ) from exc
+        from .models import anthropic_model
+
+        return getattr(anthropic_model, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
