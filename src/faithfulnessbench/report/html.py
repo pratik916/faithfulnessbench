@@ -212,7 +212,7 @@ def render_report(report: dict) -> str:
 
     # Section 2 — orthogonality
     parts.append("<section><h2><span class='n'>2</span>Does each probe catch its own failure mode — and only its own?</h2>")
-    parts.append("<p class='lead'>The diagonal is each probe detecting the axis it targets (AUROC ≈ 1). The off-diagonal is each probe run against models broken on a <em>different</em> axis — near chance (0.5), i.e. the probes are specific, not a generic \"something is off\" detector.</p>")
+    parts.append("<p class='lead'>The diagonal is each probe detecting the axis it targets (AUROC ≈ 1). The off-diagonal is each probe run against models broken on a <em>different</em> axis — <strong>exactly 0.50</strong>, which is a <em>structural</em> artifact (the probe returns identical zeros off its axis, so the AUROC is the tie-convention value), not merely measured near-chance non-leakage. The probes are specific, not a generic \"something is off\" detector.</p>")
     parts.append(f"<div class='chartrow'><div>{spec_heat}</div></div>")
     parts.append("</section>")
 

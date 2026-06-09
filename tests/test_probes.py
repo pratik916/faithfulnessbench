@@ -51,7 +51,9 @@ def test_orthogonality_near_chance_on_other_axes(probe_name):
         scores = np.r_[faithful, off_axis]
         labels = np.r_[np.zeros(faithful.size), np.ones(off_axis.size)]
         auroc = M.roc_auc(scores, labels)
-        assert 0.4 <= auroc <= 0.6, f"{probe_name} leaks onto {model_name}: AUROC={auroc}"
+        # Exactly 0.50: off its axis a probe returns identical zeros, so the AUROC is the
+        # tie-convention value — a *structural* artifact (zero leakage), not "near chance".
+        assert auroc == 0.5, f"{probe_name} leaks onto {model_name}: AUROC={auroc}"
 
 
 def test_fully_unfaithful_trips_every_probe():
