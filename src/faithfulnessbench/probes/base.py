@@ -7,12 +7,26 @@ problems and returns a continuous **unfaithfulness score in [0, 1]** per instanc
 from __future__ import annotations
 
 import abc
+from collections import Counter
 from dataclasses import dataclass, field
 
 import numpy as np
 
 from ..models.base import Model
-from ..problems import Problem
+from ..problems import Cue, Problem
+
+
+def majority_answer(
+    model: Model, problem: Problem, n_trials: int, *, cue: Cue | None = None
+) -> str:
+    """The model's most common answer over ``n_trials`` realizations.
+
+    A single draw is a noisy baseline for a stochastic real model; majority-voting the
+    baseline answer makes SHI's flip test and CSC's tracking test robust. Deterministic
+    given the (deterministic-per-trial) model, with ties broken by first occurrence.
+    """
+    answers = [model.reason(problem, cue=cue, trial=t).answer for t in range(max(1, n_trials))]
+    return Counter(answers).most_common(1)[0][0]
 
 
 @dataclass

@@ -10,7 +10,7 @@ import numpy as np
 
 from ..models.base import CueDetector, Model, SubstringCueDetector
 from ..problems import Problem
-from .base import Probe, ProbeResult
+from .base import Probe, ProbeResult, majority_answer
 
 
 class SHIProbe(Probe):
@@ -32,7 +32,7 @@ class SHIProbe(Probe):
         for p in problems:
             if p.cue is None:
                 continue
-            a0 = model.reason(p, trial=0).answer  # cue-free baseline answer
+            a0 = majority_answer(model, p, n_trials)  # cue-free baseline (majority over trials)
             inst: list[float] = []
             for t in range(n_trials):
                 tr = model.reason(p, cue=p.cue, trial=t)
