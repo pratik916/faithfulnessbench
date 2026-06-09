@@ -119,6 +119,18 @@ class AnthropicModel(Model):
         return self._client
 
     def _api_call(self, system: str, user: str, *, think: bool) -> tuple[str, str]:
+        """Build and send one Messages request.
+
+        Request shapes verified against the `claude-api` skill (2026-06):
+        * reasoning uses **adaptive thinking** (`thinking={"type":"adaptive"}`) with depth
+          controlled by `output_config={"effort": ...}` — no `budget_tokens` (deprecated);
+        * Opus 4.7/4.8 omit thinking text unless `display:"summarized"` is set, so we set it
+          (note: summarized ≠ raw reasoning — see the thinking-vs-answer diagnostic caveat);
+        * the "answer from given reasoning" probes pass `thinking={"type":"disabled"}` so the
+          model commits to the supplied reasoning instead of re-deriving;
+        * the cache key is a sha256 of the request `spec`, so the shape must be stable before
+          any keyed recording (a wrong shape means re-billing to re-record).
+        """
         client = self._ensure_client()
         kwargs: dict = {
             "model": self.model_id,

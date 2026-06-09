@@ -48,6 +48,41 @@ def test_commit_probes_disable_thinking():
     assert seen == [False, False]
 
 
+def test_api_call_constructs_verified_sdk_request_shapes():
+    """Dry-run the real request path against a fake client (no key, no spend): the
+    Messages request must have the shapes verified against the claude-api skill (fb-0nc.2)."""
+    captured: dict = {}
+
+    class _Block:
+        def __init__(self, type, **kw):
+            self.type = type
+            for k, v in kw.items():
+                setattr(self, k, v)
+
+    class _Resp:
+        content = [_Block("thinking", thinking="t"), _Block("text", text="ANSWER: 9")]
+
+    class _Client:
+        class messages:  # noqa: N801 - mimic SDK's client.messages.create
+            @staticmethod
+            def create(**kwargs):
+                captured.clear()
+                captured.update(kwargs)
+                return _Resp()
+
+    p = arithmetic_chain_problems(1, seed=0)[0]
+    m = AnthropicModel("claude-opus-4-8", effort="high", client=_Client())
+
+    m.reason(p)  # reasoning -> adaptive thinking + effort; opus-4.8 -> summarized display
+    assert captured["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert captured["output_config"] == {"effort": "high"}
+    assert captured["messages"][0]["role"] == "user"
+
+    m.continue_from_cot(p, ["10 + 1 = 11"])  # commit probe -> thinking disabled, no effort
+    assert captured["thinking"] == {"type": "disabled"}
+    assert "output_config" not in captured
+
+
 def test_cache_avoids_repeat_calls(tmp_path):
     n = {"calls": 0}
 
