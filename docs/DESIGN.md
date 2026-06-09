@@ -1,10 +1,14 @@
 # FaithfulnessBench — Design & Methodology
 
-> Chain-of-thought (CoT) monitoring is only a valid safety/oversight strategy if the
-> stated reasoning is *causally faithful* — i.e. it reflects the computation that
-> actually produced the answer. FaithfulnessBench measures that property with four
-> orthogonal causal probes and, crucially, **validates the measurement itself**
-> against models whose (un)faithfulness is *known by construction*.
+> Chain-of-thought (CoT) **monitorability** — the 2025 multi-lab safety agenda
+> (Korbak, Balesni et al., <https://arxiv.org/abs/2507.11473>) — is only a valid oversight
+> strategy if the stated reasoning is *causally faithful* (it reflects the computation that
+> produced the answer) *and* *covering* (it verbalizes the decision-relevant factors):
+> monitorability ≈ faithfulness × coverage. FaithfulnessBench measures both with four
+> orthogonal causal probes (SHI/CSC/EAR for faithfulness, SIM for coverage) and, crucially,
+> **validates the measurement itself** against models whose (un)faithfulness is *known by
+> construction*. Scope is behavioral (black-box); white-box / activation-level probing is
+> out of scope.
 
 This document is the source of truth for the methodology. The code in
 `src/faithfulnessbench/` implements exactly what is specified here.

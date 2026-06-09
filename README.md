@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-92%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![tests](https://img.shields.io/badge/tests-94%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -12,7 +12,9 @@ Chain-of-thought monitoring is a leading AI-oversight strategy: read the model's
 
 Measuring faithfulness is hard because it's a **counterfactual claim about an unobservable cause**. Most prior work proposes a *single* probe and reports its output as "faithfulness" — which is circular: the probe defines the very thing it claims to measure, with no way to check it's right.
 
-**FaithfulnessBench breaks the circularity.** It runs four orthogonal causal probes and then asks the question almost no faithfulness work asks: *are the probes themselves valid?* We build synthetic models whose decision rule is fixed in code — so we **know**, per case, whether each is being faithful — and measure how well each probe's score recovers that planted ground truth (by AUROC). That turns a slippery construct into a falsifiable instrument.
+This is the agenda a 2025 multi-lab position paper calls **CoT monitorability** (Korbak, Balesni et al., <https://arxiv.org/abs/2507.11473>): a monitor that reads the chain-of-thought is useful only to the degree the CoT is both **faithful** (it reflects the real computation) *and* **covering/legible** (it actually verbalizes the decision-relevant factors). FaithfulnessBench's four probes are components of exactly such a monitor — SHI, CSC and EAR target *faithfulness*, while SIM (counterfactual simulatability) targets *coverage*: can an observer predict the answer from the CoT at all. Monitorability ≈ **faithfulness × coverage**, and the card reports both. We measure **behavioral** (black-box) monitorability; **white-box** / activation-level probing is out of scope.
+
+**FaithfulnessBench breaks the circularity.** It runs four orthogonal causal probes and then asks the question almost no faithfulness work asks: *are the probes themselves valid?* We build synthetic models whose decision rule is fixed in code — so we **know**, per case, whether each is being faithful — and measure how well each probe's score recovers that planted ground truth (by AUROC). That turns a slippery construct into a falsifiable instrument. (The honest yardstick: hand-annotated benchmarks like [FaithCoT-Bench](https://arxiv.org/abs/2510.04040) put the *best* behavioral detector near ~0.70 AUROC, so our synthetic 1.000 is a wiring/specificity control, not a real-world score.)
 
 ## Headline result
 
