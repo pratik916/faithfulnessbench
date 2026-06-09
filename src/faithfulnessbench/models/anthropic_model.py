@@ -26,6 +26,7 @@ import hashlib
 import json
 import os
 import re
+import time as _time
 from pathlib import Path
 from typing import Callable
 
@@ -87,6 +88,14 @@ class AnthropicModel(Model):
         "Reply with only a single line 'ANSWER: <X>' where <X> is {answer_kind}."
     )
 
+    # Per-1M-token USD prices for token/cost accounting (input, output).
+    PRICES = {
+        "claude-opus-4-8": (5.0, 25.0),
+        "claude-opus-4-7": (5.0, 25.0),
+        "claude-sonnet-4-6": (3.0, 15.0),
+        "claude-haiku-4-5": (1.0, 5.0),
+    }
+
     def __init__(
         self,
         model: str = "claude-sonnet-4-6",
@@ -96,6 +105,9 @@ class AnthropicModel(Model):
         cache_path: str | os.PathLike | None = None,
         transport: Transport | None = None,
         client=None,
+        max_retries: int = 2,
+        backoff: float = 0.0,
+        sleep=None,
     ):
         self.model_id = model
         self.name = model
@@ -104,6 +116,24 @@ class AnthropicModel(Model):
         self._cache = _JsonCache(cache_path) if cache_path else None
         self._transport = transport
         self._client = client
+        self._max_retries = max_retries
+        self._backoff = backoff
+        self._sleep = sleep or _time.sleep
+        self.call_log: list[dict] = []  # per-call {tag, input_tokens, output_tokens, truncated}
+        self._last_meta: dict = {}
+
+    def token_totals(self) -> dict[str, int]:
+        """Summed input/output tokens recorded across real API calls."""
+        return {
+            "input_tokens": sum(c.get("input_tokens") or 0 for c in self.call_log),
+            "output_tokens": sum(c.get("output_tokens") or 0 for c in self.call_log),
+        }
+
+    def estimated_cost_usd(self) -> float:
+        """Estimated spend from the recorded tokens at this model's list price."""
+        pin, pout = self.PRICES.get(self.model_id, (0.0, 0.0))
+        t = self.token_totals()
+        return (t["input_tokens"] * pin + t["output_tokens"] * pout) / 1e6
 
     # -- network seam ------------------------------------------------------- #
     def _ensure_client(self):
@@ -148,6 +178,12 @@ class AnthropicModel(Model):
         else:
             kwargs["thinking"] = {"type": "disabled"}
         resp = client.messages.create(**kwargs)
+        usage = getattr(resp, "usage", None)
+        self._last_meta = {
+            "input_tokens": getattr(usage, "input_tokens", None) if usage is not None else None,
+            "output_tokens": getattr(usage, "output_tokens", None) if usage is not None else None,
+            "truncated": getattr(resp, "stop_reason", None) == "max_tokens",
+        }
         cot = "\n".join(b.thinking for b in resp.content if b.type == "thinking")
         text = "".join(b.text for b in resp.content if b.type == "text")
         return cot, text
@@ -169,10 +205,24 @@ class AnthropicModel(Model):
             if hit is not None:
                 return tuple(hit)  # type: ignore[return-value]
         fn = self._transport or (lambda s: self._api_call(s["system"], s["user"], think=s["think"]))
-        cot, text = fn(spec)
+        self._last_meta = {}
+        cot, text = self._with_retries(fn, spec)
+        if self._transport is None and self._last_meta:
+            self.call_log.append({"tag": tag, **self._last_meta})
         if self._cache is not None:
             self._cache.put(key, (cot, text))
         return cot, text
+
+    def _with_retries(self, fn, spec):
+        """Call ``fn(spec)`` with bounded exponential backoff on transient errors."""
+        for attempt in range(self._max_retries + 1):
+            try:
+                return fn(spec)
+            except Exception:
+                if attempt == self._max_retries:
+                    raise
+                if self._backoff:
+                    self._sleep(self._backoff * (2 ** attempt))
 
     @staticmethod
     def _answer_kind(problem: Problem) -> str:

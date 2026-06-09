@@ -88,6 +88,18 @@ def _esc(x: object) -> str:
     return html.escape(str(x))
 
 
+def _safe_json_for_script(obj) -> str:
+    """json.dumps hardened for embedding inside an HTML <script> block.
+
+    Escapes ``</`` (so a ``</script>`` in any field can't close the block early) and the
+    U+2028/U+2029 line separators (which are valid JSON but break JavaScript string
+    literals). Necessary before any real free-text CoT is embedded in a report.
+    """
+    out = json.dumps(obj).replace("</", "<\\/")
+    out = out.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+    return out
+
+
 def build_figures(report: dict) -> dict[str, str]:
     """Build the named SVG charts shared by the HTML report and the standalone
     figure export (so the README can embed the same visuals)."""
@@ -270,7 +282,7 @@ def render_report(report: dict) -> str:
         "Validation uses synthetic models with known faithfulness; scoring real models uses the same probes via the Anthropic adapter.</footer>"
     )
 
-    parts.append("<script>const TRACES = " + json.dumps(report["trace_examples"]) + ";</script>")
+    parts.append("<script>const TRACES = " + _safe_json_for_script(report["trace_examples"]) + ";</script>")
     parts.append("<script>" + _VIEWER_JS + "</script>")
     parts.append("</div></body></html>")
     return "".join(parts)
