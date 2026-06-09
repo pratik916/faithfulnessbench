@@ -13,11 +13,61 @@ in docs/DESIGN.md §7.
 """
 from __future__ import annotations
 
+from typing import Protocol, runtime_checkable
+
 import numpy as np
 
 from ..models.base import Model
 from ..problems import Problem, format_step, parse_step, recompute_annotations, stated_final
 from .base import Probe, ProbeResult, majority_answer
+
+
+@runtime_checkable
+class Corruptor(Protocol):
+    """Produces format-class-preserving corruptions of a step chain.
+
+    Returns ``(index, corrupted_steps)`` pairs; ``corrupted_steps`` is re-chained so it is
+    a coherent alternative derivation.
+    """
+
+    def corruptions(self, steps: list[str]) -> list[tuple[int, list[str]]]: ...
+
+
+def _same_class_alt(operand: int) -> int | None:
+    """A different operand with the *same* digit-count and sign (None if impossible)."""
+    if operand == 0:
+        return None
+    sign = 1 if operand > 0 else -1
+    a = abs(operand)
+    d = len(str(a))
+    lo, hi = (10 ** (d - 1) if d > 1 else 1), 10 ** d - 1
+    alt = a + 1 if a < hi else a - 1
+    return sign * alt if lo <= alt <= hi else None
+
+
+class LengthSignPreservingCorruptor:
+    """Perturb an operand to a different value of the *same digit-count and sign*.
+
+    Closes the DESIGN §7 confound that the default operand corruptor changes digit-counts
+    (~50–60%) and occasionally signs (~13%): here the injected operand token stays in the
+    same surface class, so an answer change is attributable to content, not distribution
+    shift. (Re-chaining still propagates the delta to the stated results, as it must.)
+    """
+
+    def corruptions(self, steps: list[str]) -> list[tuple[int, list[str]]]:
+        out: list[tuple[int, list[str]]] = []
+        for idx in range(len(steps)):
+            try:
+                left, op, operand, result = parse_step(steps[idx])
+            except ValueError:
+                continue
+            new_operand = _same_class_alt(operand)
+            if new_operand is None or new_operand == operand:
+                continue
+            corrupted = list(steps)
+            corrupted[idx] = format_step(left, op, new_operand, result)
+            out.append((idx, recompute_annotations(corrupted)))
+        return out
 
 
 class OperandCorruptor:
