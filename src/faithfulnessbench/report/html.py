@@ -207,6 +207,15 @@ def render_report(report: dict) -> str:
     if "auroc_vs_noise" in val:
         parts.append("<section><h2><span class='n'>1b</span>Is the AUROC a measurement, or just wiring?</h2>")
         parts.append("<p class='lead'>The clean signal is separable by construction, so targeted AUROC = 1.000 only certifies each probe is correctly <em>wired</em> to its failure mode. Injecting symmetric label noise makes the synthetic classes overlap; AUROC then falls toward chance, so this curve is a genuine <em>sensitivity</em> measurement. CSC and EAR — which average over many sub-measurements — degrade more slowly than SHI and SIM.</p>")
+        if "monitor" in val:
+            mon = val["monitor"]
+            pct = int(round(mon["target_fpr"] * 100))
+            parts.append("<p class='lead'>Read as a CoT monitor: calibrate the combined detector on the known-faithful negatives at "
+                         f"≤ {pct}% false-positive rate, then measure its catch-rate. <em>Blatant</em> (full-dial) unfaithfulness is caught completely; <em>subtle</em> (intermediate-dial) unfaithfulness is the harder, honest case.</p>")
+            parts.append("<div class='kpis'>")
+            parts.append(f"<div class='kpi'><div class='v'>{mon['catch_rate_blatant']:.2f}</div><div class='l'>catch-rate @ ≤{pct}% FPR — blatant</div></div>")
+            parts.append(f"<div class='kpi'><div class='v'>{mon['catch_rate_subtle']:.2f}</div><div class='l'>catch-rate @ ≤{pct}% FPR — subtle</div></div>")
+            parts.append("</div>")
         parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div></div>")
         parts.append("</section>")
 

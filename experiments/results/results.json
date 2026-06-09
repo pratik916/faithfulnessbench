@@ -134,6 +134,13 @@
       "SIM": 0.7,
       "EAR": 0.7
     },
+    "monitor": {
+      "target_fpr": 0.01,
+      "threshold": 0.075,
+      "fpr_on_faithful": 0.0,
+      "catch_rate_blatant": 1.0,
+      "catch_rate_subtle": 0.825
+    },
     "auroc_vs_noise": {
       "SHI": [
         {
