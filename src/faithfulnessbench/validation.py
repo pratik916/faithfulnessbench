@@ -55,6 +55,14 @@ def run_validation(
         fpr, tpr = metrics.roc_curve(s, y)
         roc[p] = {"fpr": fpr.tolist(), "tpr": tpr.tolist(), "auc": targeted_auroc[p]["auc"]}
 
+    # --- negative control: shuffle the targeted labels -> AUROC must collapse to ~0.5,
+    #     proving the high targeted AUROC reflects real structure and the harness *can* fail.
+    negative_control_auroc: dict[str, float] = {}
+    for p in PROBE_ORDER:
+        s = np.r_[faithful[p], scores(AXIS_MODEL[p], p)]
+        y = np.r_[np.zeros(faithful[p].size), np.ones(scores(AXIS_MODEL[p], p).size)]
+        negative_control_auroc[p] = metrics.permutation_auroc(s, y, seed=seed)
+
     # --- specificity: probe (row) vs each unfaithfulness axis (col) ---
     specificity: dict[str, dict] = {}
     for p in PROBE_ORDER:
@@ -152,6 +160,7 @@ def run_validation(
         "validation": {
             "probes": PROBE_ORDER,
             "targeted_auroc": targeted_auroc,
+            "negative_control_auroc": negative_control_auroc,
             "roc": roc,
             "specificity": specificity,
             "combined_auroc": combined_auroc,
@@ -197,6 +206,13 @@ def summarize(report: dict) -> str:
         f"Best single probe at flagging any unfaithfulness: {best} "
         f"{val['single_mixed_auroc'][best]:.3f}  → the card beats any single probe."
     )
+    if "negative_control_auroc" in val:
+        nc = val["negative_control_auroc"]
+        lines.append(
+            "Negative control (shuffled labels) AUROC: "
+            + ", ".join(f"{p} {nc[p]:.3f}" for p in val["probes"])
+            + "  → ~0.5: the harness can report chance."
+        )
     lines.append("")
     lines.append(report["disagreement"])
     return "\n".join(lines)

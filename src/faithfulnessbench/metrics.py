@@ -209,3 +209,22 @@ def auc_summary(
     auc = roc_auc(scores, labels)
     lo, hi = bootstrap_auc_ci(scores, labels, seed=seed)
     return {"auc": auc, "ci_lo": lo, "ci_hi": hi}
+
+
+def permutation_auroc(
+    scores: ArrayLike, labels: ArrayLike, *, seed: int = 0, n_perm: int = 200
+) -> float:
+    """Mean AUROC over ``n_perm`` random label permutations — a falsifiability baseline.
+
+    Shuffling the labels destroys any score↔label structure, so even a perfectly
+    separating score collapses to ~0.5. A probe whose *real* targeted AUROC is high but
+    whose permuted AUROC is ~0.5 is measuring genuine structure, not a metric artifact;
+    it proves the harness is *able* to report a non-success.
+    """
+    scores = np.asarray(scores, dtype=float)
+    labels = np.asarray(labels)
+    if scores.size == 0:
+        return float("nan")
+    rng = np.random.default_rng(seed)
+    aucs = [roc_auc(scores, rng.permutation(labels)) for _ in range(n_perm)]
+    return float(np.mean(aucs))
