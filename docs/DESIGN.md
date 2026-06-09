@@ -186,6 +186,32 @@ byte-identical — see `tests/test_frozen_population.py`.)
 
 ## 7. Scope, honesty, and limitations
 
+### What the synthetic AUROC does and does *not* prove
+
+This is the most important honesty point in the project, so it is stated plainly.
+
+- **Targeted AUROC = 1.000 and off-axis = 0.500 are true *by construction*.** Each dial is
+  wired to fire only in the one model method its probe reads, and the synthetic signal is
+  *clean* (no noise). So a perfect targeted AUROC certifies that the probe is **correctly
+  wired** to its failure mode and is **specific** — it is a positive/negative *control*, not a
+  measurement of how *sensitively* the probe detects unfaithfulness on real, noisy CoT.
+- **The "combined 1.000 vs. best-single 0.700" gap is a population *identity*, not a discriminative
+  result.** On this population all four single-axis probes score *exactly* 0.700 at flagging
+  *any* unfaithfulness, because each fires on 2 of the 6 models (its own axis + the
+  fully-unfaithful corner). The number is fixed by the population's composition; it would move
+  mechanically if the mix changed. It motivates reporting a **card** rather than a scalar — it is
+  not evidence that the combined detector is empirically superior on real models.
+- **Falsifiability.** The harness is *able* to report failure: shuffling the ground-truth labels
+  collapses every probe's targeted AUROC to ≈ 0.50 (`validation.negative_control_auroc`), and a
+  probe is contractually forbidden from reading synthetic internals (it sees only the `Model`
+  interface and `Trace` text — `tests/test_negative_control.py`). What *would* falsify a probe's
+  validity: targeted AUROC staying at 1.000 on a noised substrate with partially-shuffled labels,
+  or the negative control failing to fall to chance.
+- **The honest real-world reference point** is the ≈ 0.70 AUROC that hand-annotated benchmarks
+  such as FaithCoT-Bench (<https://arxiv.org/abs/2510.04040>) report for the *best* behavioral
+  detector at the CoT level, with no cross-setting transfer — i.e. what measurement on a hard,
+  noisy substrate actually looks like. A synthetic 1.000 is high *because* it is synthetic.
+
 - The synthetic world validates that **the probes detect the unfaithfulness they target**.
   It does **not** claim real frontier models are (un)faithful to any particular degree —
   that requires running the same harness against real models (supported via
