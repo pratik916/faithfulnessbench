@@ -26,5 +26,7 @@ jobs:
         run: python tools/check_test_count.py
       - name: Regression-gate the committed results.json (recompute & diff, never overwrites)
         run: faithfulnessbench validate --check
+      - name: Check the committed HTML report and SVGs are not stale vs results.json
+        run: python tools/check_artifacts.py
       - name: Run the validation end-to-end (smoke, exercises the report writer)
         run: faithfulnessbench validate -n 6 --report /tmp/report.html --json /tmp/results.json

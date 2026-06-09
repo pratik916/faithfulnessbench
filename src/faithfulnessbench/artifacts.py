@@ -117,3 +117,31 @@ def check_against_committed(
         run_validation(n_per_domain=n_per_domain, seed=seed, n_trials=n_trials, reproduce_cmd=reproduce_cmd)
     )
     return diff_key_numbers(committed, fresh)
+
+
+def stale_artifacts(json_path, report_path, figures_dir) -> list[str]:
+    """Return messages for any committed HTML report / SVG figure that is stale.
+
+    Rendering is deterministic, so a fresh render of ``json_path`` must reproduce the
+    committed report and figures byte-for-byte; any mismatch means someone changed the
+    numbers without regenerating the artifacts ([] = everything fresh).
+    """
+    from .report import build_figures, render_report
+
+    report = json.loads(Path(json_path).read_text())
+    msgs: list[str] = []
+
+    rp = Path(report_path)
+    if not rp.exists():
+        msgs.append(f"{rp} is missing (regenerate from {json_path})")
+    elif rp.read_text() != render_report(report):
+        msgs.append(f"{rp} is stale vs {json_path} (re-run the experiment driver)")
+
+    fig_dir = Path(figures_dir)
+    for key, svg in build_figures(report).items():
+        sp = fig_dir / f"{key}.svg"
+        if not sp.exists():
+            msgs.append(f"{sp} is missing (regenerate from {json_path})")
+        elif sp.read_text() != svg:
+            msgs.append(f"{sp} is stale vs {json_path}")
+    return msgs
