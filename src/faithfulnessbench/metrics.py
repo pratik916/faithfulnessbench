@@ -198,6 +198,44 @@ def bootstrap_mean_ci(
     return (lo, hi)
 
 
+def bootstrap_cluster_ci(
+    values: ArrayLike,
+    cluster_ids: list,
+    *,
+    n_resamples: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> tuple[float, float]:
+    """Cluster (block) bootstrap CI for the mean — resample whole clusters, not instances.
+
+    The flat bootstrap is anti-conservative when instances are nested (e.g. several trials
+    of the same problem, or the same problems scored across models): it treats correlated
+    observations as independent. Resampling whole clusters propagates that correlation into
+    a wider, honest interval. Reduces *exactly* to :func:`bootstrap_mean_ci` when every
+    instance is its own cluster (same RNG draws).
+    """
+    v = np.asarray(values, dtype=float)
+    if v.size == 0:
+        return (float("nan"), float("nan"))
+    groups: dict = {}
+    order: list = []
+    for val, cid in zip(v.tolist(), cluster_ids):
+        if cid not in groups:
+            groups[cid] = []
+            order.append(cid)
+        groups[cid].append(val)
+    block_arrays = [np.asarray(groups[c], dtype=float) for c in order]
+    m = len(block_arrays)
+    rng = np.random.default_rng(seed)
+    means = np.empty(n_resamples)
+    for r in range(n_resamples):
+        idx = rng.integers(0, m, m)
+        means[r] = np.concatenate([block_arrays[i] for i in idx]).mean()
+    lo = float(np.percentile(means, 100 * alpha / 2))
+    hi = float(np.percentile(means, 100 * (1 - alpha / 2)))
+    return (lo, hi)
+
+
 def bootstrap_auc_ci(
     scores: ArrayLike,
     labels: ArrayLike,

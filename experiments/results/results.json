@@ -33,6 +33,24 @@
         "ci_hi": 1.0
       }
     },
+    "per_domain_auroc": {
+      "SHI": {
+        "arithmetic": 1.0,
+        "mcq": 1.0
+      },
+      "CSC": {
+        "arithmetic": 1.0,
+        "mcq": 1.0
+      },
+      "SIM": {
+        "arithmetic": 1.0,
+        "mcq": 1.0
+      },
+      "EAR": {
+        "arithmetic": 1.0,
+        "mcq": 1.0
+      }
+    },
     "negative_control_auroc": {
       "SHI": 0.501125,
       "CSC": 0.501125,

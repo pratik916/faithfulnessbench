@@ -81,6 +81,26 @@ def run_validation(
         y = np.r_[np.zeros(faithful[p].size), np.ones(scores(AXIS_MODEL[p], p).size)]
         negative_control_auroc[p] = metrics.permutation_auroc(s, y, seed=seed)
 
+    # --- per-domain detection AUROC: does each probe catch its axis within each domain? ---
+    domain_of = {pr.id: pr.domain for pr in problems}
+
+    def _by_domain(model_name: str, probe: str) -> dict[str, np.ndarray]:
+        res = results_by_model[model_name][probe]
+        out: dict[str, list] = {}
+        for pid, sc in zip(res.problem_ids, res.scores.tolist()):
+            out.setdefault(domain_of[pid], []).append(sc)
+        return {d: np.asarray(v, dtype=float) for d, v in out.items()}
+
+    per_domain_auroc: dict[str, dict] = {}
+    for p in PROBE_ORDER:
+        fd = _by_domain("faithful", p)
+        ad = _by_domain(AXIS_MODEL[p], p)
+        per_domain_auroc[p] = {}
+        for dom in sorted(set(fd) & set(ad)):
+            s = np.r_[fd[dom], ad[dom]]
+            y = np.r_[np.zeros(fd[dom].size), np.ones(ad[dom].size)]
+            per_domain_auroc[p][dom] = metrics.roc_auc(s, y)
+
     # --- specificity: probe (row) vs each unfaithfulness axis (col) ---
     specificity: dict[str, dict] = {}
     for p in PROBE_ORDER:
@@ -257,6 +277,7 @@ def run_validation(
     validation_block = {
         "probes": PROBE_ORDER,
         "targeted_auroc": targeted_auroc,
+        "per_domain_auroc": per_domain_auroc,
         "negative_control_auroc": negative_control_auroc,
         "roc": roc,
         "specificity": specificity,

@@ -90,7 +90,9 @@ def card_from_results(
     sub_scores: list[float] = []
 
     for name, res in results.items():
-        lo, hi = metrics.bootstrap_mean_ci(res.scores, seed=bootstrap_seed)
+        # Cluster bootstrap by problem id (honest under nesting; reduces to the flat
+        # bootstrap here since each problem contributes one aggregated score).
+        lo, hi = metrics.bootstrap_cluster_ci(res.scores, res.problem_ids, seed=bootstrap_seed)
         faithfulness = res.faithfulness()
         probe_scores[name] = {
             "unfaithfulness": res.mean,
