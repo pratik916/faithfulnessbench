@@ -159,6 +159,11 @@
       "catch_rate_blatant": 1.0,
       "catch_rate_subtle": 0.825
     },
+    "headline_classification": {
+      "auroc": 1.0,
+      "f1": 1.0,
+      "kappa": 1.0
+    },
     "calibration": {
       "noise": 0.3,
       "ece_combined": 0.40401388888888884,

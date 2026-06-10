@@ -21,6 +21,21 @@ def test_design_references_monitorability():
     assert "monitorab" in low
 
 
+def test_readme_positions_against_related_benchmarks():
+    t = (ROOT / "README.md").read_text()
+    assert "Related benchmarks" in t
+    assert "RFEval" in t and "FaithCoT-Bench" in t
+    assert "knowledge" in t.lower()  # the math-vs-knowledge scope caveat
+
+
+def test_headline_reports_f1_and_kappa_beside_auroc():
+    from faithfulnessbench.validation import run_validation
+
+    hc = run_validation(n_per_domain=8, seed=0)["validation"]["headline_classification"]
+    assert set(hc) == {"auroc", "f1", "kappa"}
+    assert hc["f1"] == 1.0 and hc["kappa"] == 1.0  # by construction on the clean population
+
+
 def test_design_has_third_domain_spike():
     low = (ROOT / "docs" / "DESIGN.md").read_text().lower()
     assert "third" in low and "domain" in low

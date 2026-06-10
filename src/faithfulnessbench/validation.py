@@ -163,6 +163,20 @@ def run_validation(
         "catch_rate_subtle": mon_subtle["catch_rate"],
     }
 
+    # Headline classification metrics beside AUROC, for comparability with annotation-based
+    # benchmarks (FaithCoT-Bench reports F1/Cohen's kappa). By construction these are 1.0 on
+    # the clean population — the same wiring/specificity caveat as the AUROC.
+    all_comb = np.concatenate([combined_by_model[n] for n in combined_by_model])
+    all_lbl = np.concatenate(
+        [(np.zeros if n == "faithful" else np.ones)(combined_by_model[n].size) for n in combined_by_model]
+    )
+    flags = (all_comb > monitor["threshold"]).astype(int)
+    headline_classification = {
+        "auroc": combined_auroc["auc"],
+        "f1": metrics.f1_score(flags, all_lbl),
+        "kappa": metrics.cohen_kappa(flags, all_lbl),
+    }
+
     # --- cross-probe correlation (disagreement finding) ---
     labels, mat = correlation_matrix(list(results_by_model.values()), PROBE_ORDER)
     matrix = [[float(mat[i][j]) for j in range(len(labels))] for i in range(len(labels))]
@@ -342,6 +356,7 @@ def run_validation(
         "combined_auroc": combined_auroc,
         "single_mixed_auroc": single_mixed_auroc,
         "monitor": monitor,
+        "headline_classification": headline_classification,
         "calibration": calibration,
         "noisy_significance": noisy_significance,
         "noisy_per_probe_significance": noisy_per_probe_significance,

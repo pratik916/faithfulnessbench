@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-152%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![tests](https://img.shields.io/badge/tests-155%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -54,6 +54,16 @@ Full methodology, with the formal protocol for each probe, is in [`docs/DESIGN.m
 | `p_pre_commit` | lock the answer before reasoning | EAR |
 
 Because the dials are code, every `(model, problem)` carries a **known label**. We instantiate one fully-faithful model, one single-axis-unfaithful model per probe, and one fully-unfaithful model — then check (a) that each probe's AUROC for its targeted axis is ~1.0 and (b) that it's ~0.5 on the other axes. The synthetic model is deliberately **not** an LLM: its value is that the ground truth is beyond dispute. **The identical probe code runs unchanged against a real Claude model** — only the backend differs.
+
+## Related benchmarks
+
+| Benchmark | How it gets faithfulness ground truth | Reports |
+|---|---|---|
+| **FaithfulnessBench** (this) | **Synthetic, by construction** — dials in code, exact per-instance labels | probe-detection AUROC, F1, Cohen's kappa |
+| [FaithCoT-Bench](https://arxiv.org/abs/2510.04040) | Expert human annotation (300+ instances) | F1 / Cohen's kappa; best behavioral detector ~0.70 AUROC, no cross-setting transfer |
+| RFEval / FRODO ([2402.13950](https://arxiv.org/abs/2402.13950)) | Behavioral counterfactual consistency | causal-robustness scores |
+
+So that the headline is comparable to the annotation-based work, the validation reports **F1 and Cohen's kappa beside AUROC** for the combined detector (all 1.0 on the clean synthetic population — the same by-construction caveat). **Scope caveat:** FaithCoT-Bench finds counterfactual methods succeed in *math* but degrade in *knowledge* domains; this harness is arithmetic-heavy, so its real-model evidence (incl. GSM8K) speaks to math reasoning, not open-domain knowledge.
 
 ## Why a card, not a single number
 

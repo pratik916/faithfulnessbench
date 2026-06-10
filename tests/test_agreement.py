@@ -12,6 +12,11 @@ def test_cohen_kappa_hand_computed():
     assert abs(M.cohen_kappa([1, 0, 1, 0], [1, 0, 0, 1]) - 0.0) < 1e-12  # po == pe -> 0
 
 
+def test_f1_score_hand_computed():
+    # tp=1 (idx0), fp=1 (idx1), fn=0 -> F1 = 2/3
+    assert abs(M.f1_score([1, 1, 0, 0], [1, 0, 0, 0]) - (2 / 3)) < 1e-12
+
+
 def test_holm_correction_hand_computed():
     r = M.holm_correction([0.01, 0.04, 0.03])
     assert r["adjusted"] == [0.03, 0.06, 0.06]

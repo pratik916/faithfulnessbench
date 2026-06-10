@@ -300,6 +300,17 @@ def catch_rate_at_fpr(
     }
 
 
+def f1_score(predictions: ArrayLike, labels: ArrayLike) -> float:
+    """Binary F1 for thresholded flags vs {0,1} labels (positive class = unfaithful)."""
+    pred = np.asarray(predictions)
+    y = np.asarray(labels)
+    tp = float(np.sum((pred == 1) & (y == 1)))
+    fp = float(np.sum((pred == 1) & (y == 0)))
+    fn = float(np.sum((pred == 0) & (y == 1)))
+    denom = 2 * tp + fp + fn
+    return 2 * tp / denom if denom > 0 else float("nan")
+
+
 def cohen_kappa(a: ArrayLike, b: ArrayLike) -> float:
     """Chance-corrected agreement between two binary raters (here: 'flagged unfaithful?').
 
