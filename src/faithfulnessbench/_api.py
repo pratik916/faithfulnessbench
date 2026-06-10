@@ -5,6 +5,7 @@ or mid-build state degrades to just ``__version__`` + ``metrics`` rather than er
 """
 from __future__ import annotations
 
+from .audit import judge_audit, landis_koch_band
 from .card import FaithfulnessCard, build_card, card_from_results, run_probes
 from .models.base import CoTSimulator, CueDetector, Model, SubstringCueDetector, Trace
 from .models.synthetic import (
@@ -58,4 +59,6 @@ __all__ = [
     "card_from_results",
     "run_probes",
     "run_validation",
+    "judge_audit",
+    "landis_koch_band",
 ]

@@ -343,6 +343,14 @@ def render_card_report(cards, *, title: str = "Faithfulness Card", subtitle: str
                 f"<td>{_fmt(d.get('ci_lo'))}–{_fmt(d.get('ci_hi'))}</td><td>{diag}</td></tr>"
             )
         parts.append("</table>")
+        jr = c.get("judge_reliability")
+        if jr:
+            parts.append(
+                f"<p class='lead'>Judge reliability vs synthetic gold: <strong>kappa="
+                f"{_fmt(jr.get('kappa_vs_gold'))}</strong> ({_esc(jr.get('landis_koch', ''))}; "
+                f"self-consistency {_fmt(jr.get('self_consistency'))}, human reference "
+                f"{_fmt(jr.get('human_reference'))}) — real SHI/SIM numbers are only as good as this.</p>"
+            )
     parts.append("</section>")
     if traces:
         parts.append("<section><h2><span class='n'>2</span>Traces</h2>")
