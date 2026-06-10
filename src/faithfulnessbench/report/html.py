@@ -170,6 +170,31 @@ def build_figures(report: dict) -> dict[str, str]:
             title=f"Reliability of the combined monitor (noised, ECE={val['calibration']['ece_combined']:.3f})",
         )
 
+    if "robustness" in val:
+        rob = val["robustness"]
+
+        def _xy(curve):
+            xs, ys = [], []
+            for b, v in zip(rob["budgets"], curve):
+                # drop NaN / null (e.g. CSC once every step is scrubbed away; json_safe maps NaN->None)
+                if v is not None and v == v:
+                    xs.append(b)
+                    ys.append(v)
+            return xs, ys
+
+        rseries = []
+        for i, p in enumerate(probes):
+            xs, ys = _xy(rob["per_probe"][p])
+            rseries.append((p, xs, ys, _PALETTE[i % len(_PALETTE)]))
+        cxs, cys = _xy(rob["combined"])
+        rseries.append(("combined", cxs, cys, "#111827"))
+        figures["robustness"] = svg.line_chart(
+            rseries,
+            title="Monitor catch-rate@1%-FPR vs CoT-obfuscation budget",
+            xlabel="CoT scrub budget (fraction of lines removed)", ylabel="catch-rate @ 1% FPR",
+            xmax=1.0, ymin=0.0, ymax=1.0,
+        )
+
     return figures
 
 
@@ -245,6 +270,19 @@ def render_report(report: dict) -> str:
                          f"<strong>{cal['ece_combined']:.3f}</strong> (equal-width bins, near-worst-case for the clean 0/1-clustered scores, so measured on noise). "
                          "The reliability diagram shows predicted vs. observed unfaithfulness.</p>")
         parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div>{cal_extra}</div>")
+        parts.append("</section>")
+
+    # Section 1c — adversarial-CoT robustness frontier
+    if "robustness" in val and "robustness" in figures:
+        parts.append("<section><h2><span class='n'>1c</span>How fast does the monitor break under CoT obfuscation?</h2>")
+        parts.append("<p class='lead'>A monitor is only as good as it is robust. We sweep a single, a-priori-fixed, "
+                     "monitor-agnostic perturbation — scrubbing a growing <em>budget</em> fraction of the chain-of-thought — and "
+                     "track each probe's catch-rate at 1% FPR. The honest result: the text-reading <strong>SIM</strong> probe "
+                     "collapses almost immediately (obfuscation makes faithful and unfaithful CoT look alike, so at fixed FPR it "
+                     "catches nothing), while the answer-behavioral probes (<strong>SHI/CSC/EAR</strong>) stay robust — their signal "
+                     "is the model's answers, not the CoT text. This is exactly why a monitor leans on behavioral probes, not "
+                     "readable-CoT alone. (Synthetic, deterministic — an offline analogue, not a real-adversary claim.)</p>")
+        parts.append(f"<div class='chartrow'><div>{figures['robustness']}</div></div>")
         parts.append("</section>")
 
     # Section 2 — orthogonality

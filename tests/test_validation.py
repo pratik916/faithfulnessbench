@@ -59,8 +59,16 @@ def test_report_is_json_serializable_and_renders():
 
 def test_figures_export(tmp_path):
     figs = build_figures(REPORT)
-    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix", "auroc_vs_noise", "reliability"}
+    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix", "auroc_vs_noise", "reliability", "robustness"}
     paths = write_figures(REPORT, str(tmp_path / "assets"))
-    assert len(paths) == 7
+    assert len(paths) == 8
     for p in paths:
         assert p.endswith(".svg")
+
+
+def test_robustness_frontier_in_report():
+    rob = REPORT["validation"]["robustness"]
+    assert set(rob["per_probe"]) == {"SHI", "CSC", "SIM", "EAR"}
+    assert len(rob["combined"]) == len(rob["budgets"])
+    # the headline finding: the text-reading SIM probe degrades under CoT obfuscation
+    assert rob["per_probe"]["SIM"][-1] < rob["per_probe"]["SIM"][0]

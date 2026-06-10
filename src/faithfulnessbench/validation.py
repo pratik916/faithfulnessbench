@@ -390,6 +390,13 @@ def run_validation(
         example(by_name["faithful"], mcq[1]),
     ]
 
+    # --- adversarial-CoT robustness frontier: a generic, a-priori CoT scrub swept by budget;
+    #     catch-rate@1%-FPR collapses for the text-reading probes (SIM) as the CoT is
+    #     obfuscated while the answer-behavioral probes stay robust (fb-cbb.2). ---
+    from .robustness import robustness_frontier
+
+    robustness = robustness_frontier(n_per_domain=n_per_domain, seed=seed, n_trials=n_trials)
+
     validation_block = {
         "probes": PROBE_ORDER,
         "targeted_auroc": targeted_auroc,
@@ -408,6 +415,7 @@ def run_validation(
         "noisy_per_probe_significance": noisy_per_probe_significance,
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
+        "robustness": robustness,
     }
     if extended_auroc:  # only present when held-out models are supplied (keeps committed artifact stable)
         validation_block["extended_auroc"] = extended_auroc
