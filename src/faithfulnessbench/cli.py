@@ -81,6 +81,15 @@ def _cmd_score(args: argparse.Namespace) -> int:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(card.to_dict(), indent=2))
         print(f"Wrote card -> {args.out}")
+    if args.html:
+        from .report import write_card_report
+
+        write_card_report(
+            card.to_dict(), args.html,
+            title=f"Faithfulness Card — {card.model_name}",
+            subtitle="Scored via the Anthropic adapter (descriptive; replayed from cache).",
+        )
+        print(f"Wrote report -> {args.html}")
     return 0
 
 
@@ -118,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--effort", default="medium", choices=["low", "medium", "high", "max"])
     s.add_argument("--cache", default=".fb_cache/score.json", help="record/replay cache path")
     s.add_argument("--out", default=None, help="optional path to write the card JSON")
+    s.add_argument("--html", default=None, help="optional path to write a shareable HTML card report")
     s.set_defaults(func=_cmd_score)
 
     args = parser.parse_args(argv)

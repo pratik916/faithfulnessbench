@@ -7,8 +7,9 @@ hint silently flip the model's answer while its chain-of-thought stays clean.
 """
 from __future__ import annotations
 
-import json
 import html
+import json
+import math
 from pathlib import Path
 
 from ..viz import svg
@@ -292,4 +293,69 @@ def write_report(report: dict, path: str) -> str:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render_report(report), encoding="utf-8")
+    return str(out)
+
+
+def _fmt(x) -> str:
+    try:
+        return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{float(x):.3f}"
+    except (TypeError, ValueError):
+        return _esc(x)
+
+
+def render_card_report(cards, *, title: str = "Faithfulness Card", subtitle: str = "", traces=None) -> str:
+    """A self-contained HTML page from one or more Faithfulness Cards (model-agnostic).
+
+    Used by the real-model `score` path so a Claude run produces the same shareable page as
+    the synthetic validation. Any embedded chain-of-thought is escaped via
+    :func:`_safe_json_for_script`, so a CoT containing ``</script>`` can't break the page.
+    """
+    if isinstance(cards, dict):
+        cards = [cards]
+    probes = list(cards[0]["probe_scores"])
+    model_names = [c["model_name"] for c in cards]
+    fmatrix = [
+        [c["probe_scores"][p]["faithfulness"] for p in probes] + [c["composite_faithfulness"]]
+        for c in cards
+    ]
+    heat = svg.heatmap(
+        model_names, probes + ["composite"], fmatrix,
+        title="Faithfulness by model and probe (green = faithful)",
+        color_fn=svg.faithfulness_color,
+    )
+
+    parts: list[str] = []
+    parts.append('<!doctype html><html lang="en"><head><meta charset="utf-8">')
+    parts.append('<meta name="viewport" content="width=device-width, initial-scale=1">')
+    parts.append(f"<title>{_esc(title)}</title><style>{_CSS}</style></head><body><div class='wrap'>")
+    parts.append(f"<header><h1>{_esc(title)}</h1><div class='tag'>{_esc(subtitle)}</div></header>")
+    parts.append("<section><h2><span class='n'>1</span>Faithfulness Card</h2>")
+    parts.append(f"<div class='chartrow'><div>{heat}</div></div>")
+    for c in cards:
+        parts.append(f"<h3>{_esc(c['model_name'])} — composite {_fmt(c['composite_faithfulness'])}</h3>")
+        parts.append("<table><tr><th>probe</th><th>faithfulness</th><th>95% CI</th><th>diagnostics</th></tr>")
+        for p in probes:
+            d = c["probe_scores"][p]
+            extra = c.get("extras", {}).get(p, {})
+            diag = ", ".join(f"{k}={_fmt(v) if isinstance(v, (int, float)) else _esc(v)}" for k, v in extra.items())
+            parts.append(
+                f"<tr><td>{_esc(p)}</td><td>{_fmt(d['faithfulness'])}</td>"
+                f"<td>{_fmt(d.get('ci_lo'))}–{_fmt(d.get('ci_hi'))}</td><td>{diag}</td></tr>"
+            )
+        parts.append("</table>")
+    parts.append("</section>")
+    if traces:
+        parts.append("<section><h2><span class='n'>2</span>Traces</h2>")
+        parts.append("<script>const TRACES = " + _safe_json_for_script(traces) + ";</script>")
+        parts.append("<pre id='traces'></pre><script>document.getElementById('traces').textContent = "
+                     "JSON.stringify(TRACES, null, 2);</script>")
+        parts.append("</section>")
+    parts.append("</div></body></html>")
+    return "".join(parts)
+
+
+def write_card_report(cards, path: str, **kwargs) -> str:
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(render_card_report(cards, **kwargs), encoding="utf-8")
     return str(out)
