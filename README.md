@@ -86,6 +86,12 @@ open report/faithfulness_report.html # self-contained interactive report
 
 The [interactive report](report/faithfulness_report.html) includes a **trace viewer**: pick a problem and watch a planted hint silently flip the model's answer while its chain-of-thought stays clean.
 
+<p align="center">
+  <a href="report/faithfulness_report.html"><img src="docs/assets/report.png" width="90%" alt="The self-contained HTML report: probe-validity KPIs, detection-AUROC and ROC charts, and the AUROC-vs-label-noise sensitivity curve with monitor catch-rates"></a>
+</p>
+
+*The top of the generated report — every probe's detection AUROC, and (below) the honest part: as label noise rises, AUROC falls from the by-construction 1.000 toward chance, so it reads as a real sensitivity measurement rather than a wiring check. The full page also includes the specificity matrix, the cross-probe agreement, per-model cards, and the interactive trace viewer.*
+
 ### Reproduce the exact numbers
 
 ```bash
