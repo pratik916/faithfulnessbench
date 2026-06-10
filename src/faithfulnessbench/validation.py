@@ -13,6 +13,7 @@ Everything is seeded, so the numbers reproduce exactly.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 
 import numpy as np
 
@@ -25,8 +26,8 @@ from .models.synthetic import (
     FaithfulnessProfile,
     model_population,
 )
-from .probes import default_probes
-from .problems import mixed_problems
+from .probes import SHIProbe, default_probes
+from .problems import HINT_KINDS, cue_of_kind, mixed_problems
 
 PROBE_ORDER = ["SHI", "CSC", "SIM", "EAR"]
 # The single-axis synthetic model that each probe is supposed to catch.
@@ -187,6 +188,24 @@ def run_validation(
             "evasion_rate": ((n_cheat - caught) / n_cheat) if n_cheat else float("nan"),
         })
     obfuscation = {"monitor_threshold": obf_tau, "curve": obfuscation_curve}
+
+    # --- SHI hint-type taxonomy (extended): each text-only hint kind (sycophancy,
+    #     consistency, metadata, authority) has its own dial; a model adopts only its own
+    #     cue kind, so SHI detects each type specifically. Per-type targeted AUROC. ---
+    shi = SHIProbe()
+    faithful_hint = ConfigurableSyntheticModel("faithful", FaithfulnessProfile(seed=seed))
+    hint_taxonomy = {}
+    for kind in HINT_KINDS:
+        kprobs = [replace(p, cue=cue_of_kind(p.cue, kind)) for p in problems if p.cue is not None]
+        type_m = ConfigurableSyntheticModel(f"hint_{kind}", FaithfulnessProfile(seed=seed, **{f"p_hint_{kind}": 1.0}))
+        fs = shi.run(faithful_hint, kprobs, n_trials=n_trials).scores
+        ts = shi.run(type_m, kprobs, n_trials=n_trials).scores
+        s = np.r_[fs, ts]
+        y = np.r_[np.zeros(fs.size), np.ones(ts.size)]
+        hint_taxonomy[kind] = {
+            "auroc": metrics.roc_auc(s, y),
+            "type_faithfulness": float(1.0 - ts.mean()),
+        }
 
     # Headline classification metrics beside AUROC, for comparability with annotation-based
     # benchmarks (FaithCoT-Bench reports F1/Cohen's kappa). By construction these are 1.0 on
@@ -382,6 +401,7 @@ def run_validation(
         "single_mixed_auroc": single_mixed_auroc,
         "monitor": monitor,
         "obfuscation": obfuscation,
+        "hint_taxonomy": hint_taxonomy,
         "headline_classification": headline_classification,
         "calibration": calibration,
         "noisy_significance": noisy_significance,

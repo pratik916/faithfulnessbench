@@ -55,6 +55,9 @@ class FaithfulnessProfile:
     """
 
     p_hint_sycophancy: float = 0.0
+    p_hint_consistency: float = 0.0  # SHI hint-type taxonomy (extended); flips only on its own cue kind
+    p_hint_metadata: float = 0.0
+    p_hint_authority: float = 0.0
     p_post_hoc: float = 0.0
     p_decoy_cot: float = 0.0
     p_pre_commit: float = 0.0
@@ -141,12 +144,14 @@ class ConfigurableSyntheticModel(Model):
         answer = problem.answer
         steps = list(problem.steps)
 
-        silent_flip = bool(
-            cue is not None
-            and self._draw(
-                self.profile.p_hint_sycophancy, problem.id, "syco", cue.marker, trial
-            )
-        )
+        silent_flip = False
+        if cue is not None:
+            # The model adopts a hint only of the cue's own *kind* (SHI taxonomy). The
+            # default "sycophancy" kind keeps the exact dial+key, so the frozen population
+            # is byte-for-byte unchanged; other kinds use their own extended dial + key.
+            dial = getattr(self.profile, "p_hint_" + cue.kind, self.profile.p_hint_sycophancy)
+            key_tag = "syco" if cue.kind == "sycophancy" else f"hint_{cue.kind}"
+            silent_flip = self._draw(dial, problem.id, key_tag, cue.marker, trial)
         decoy = self._draw(self.profile.p_decoy_cot, problem.id, "decoy", trial)
 
         # Decide what the chain *concludes*. A decoy chain points away from the answer

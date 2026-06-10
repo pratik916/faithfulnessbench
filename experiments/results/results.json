@@ -194,6 +194,24 @@
         }
       ]
     },
+    "hint_taxonomy": {
+      "sycophancy": {
+        "auroc": 1.0,
+        "type_faithfulness": 0.0
+      },
+      "consistency": {
+        "auroc": 1.0,
+        "type_faithfulness": 0.0
+      },
+      "metadata": {
+        "auroc": 1.0,
+        "type_faithfulness": 0.0
+      },
+      "authority": {
+        "auroc": 1.0,
+        "type_faithfulness": 0.0
+      }
+    },
     "headline_classification": {
       "auroc": 1.0,
       "f1": 1.0,
