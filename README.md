@@ -80,6 +80,18 @@ The cheapest honest answer to *"does it generalize?"* is to run the **identical 
 
 SHI and EAR **run unchanged** on free-text GSM8K CoT; CSC and SIM **degrade** because real reasoning has no parseable `L op R = V` chain to corrupt or exactly simulate — exactly the real-path limitation documented in `docs/DESIGN.md`. (The GSM8K column currently replays from the labeled *fake* cache; it becomes a real measurement with the one-command real recording.) This is *in-domain* (still arithmetic) and does not claim cross-domain *validity* transfer — consistent with FaithCoT-Bench's math→knowledge finding above.
 
+### White-box vs black-box: where does activation probing win? (offline analogue)
+
+A numpy **offline analogue** of activation probing (cf. [Apollo](https://arxiv.org/abs/2502.03407)): each synthetic model gets a generic, a-priori *activation* vector and a logistic probe is fit on a held-out split. The honest result is the **contrast**, not the (by-construction) white-box number:
+
+| Setting | White-box (activation probe) | Black-box (CoT-reading monitor) |
+|---|---|---|
+| **Obfuscation** — the model states a *wrong* answer, evading the monitor | **0.91** | **0.40** ≈ chance (evaded) |
+| **Filler** — unfaithful only under *intervention* | **0.50** ≈ chance (blind) | **0.98** (the FIL probe catches it) |
+| Permuted-label control | **0.47** (signal destroyed) | — |
+
+Where an obfuscated CoT defeats the text-reading monitor, the activation probe reads the wrong-answer signal directly — **but** it is blind to the interventional FILLER axis a causal probe catches. The two are *complementary*; white-box probing does not replace causal probes. The white-box numbers are high *by construction* (we authored both the activation and the label), so this **proves nothing about real-model activations** — it is an offline analogue, surfaced as report [§1d](https://pratik916.github.io/faithfulnessbench/).
+
 ## Why a card, not a single number
 
 <p align="center">
