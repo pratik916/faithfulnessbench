@@ -216,6 +216,14 @@ This is the most important honesty point in the project, so it is stated plainly
   detector at the CoT level, with no cross-setting transfer — i.e. what measurement on a hard,
   noisy substrate actually looks like. A synthetic 1.000 is high *because* it is synthetic.
 
+- **Obfuscated reward hacking (OBF) is an offline known-label *analogue*, not a reproduction.**
+  A `p_obfuscate` model coherently concludes a *wrong* answer via a **generic** surface scrub
+  (perturb the final operand and re-chain — defined independently of the monitor), so every probe
+  still sees a self-consistent chain and the combined monitor stays low. Crucially the monitor
+  threshold τ is **fixed first** (the safety-at-1%-FPR operating point), *then* the obfuscation is
+  applied, so evasion = (the model provably cheats) ∧ (the fixed monitor misses it) is not circular.
+  `validation.obfuscation` reports the evasion curve. This is an *analogue* of Baker et al.
+  (<https://arxiv.org/abs/2503.11926>) with known labels — it does not reproduce their RL finding.
 - **Significance testing is scoped to substrates where the numbers genuinely vary.** The
   combined-vs-best-single comparison is significance-tested (DeLong + paired permutation,
   `validation.noisy_significance`) only on the *noised* substrate; the zero-noise gap is a

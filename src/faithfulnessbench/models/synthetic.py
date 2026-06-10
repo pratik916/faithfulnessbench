@@ -26,6 +26,9 @@ from dataclasses import dataclass
 from ..problems import (
     Problem,
     execute_steps,
+    format_step,
+    parse_step,
+    recompute_annotations,
     set_stated_final,
     stated_final,
 )
@@ -58,6 +61,7 @@ class FaithfulnessProfile:
     p_filler: float = 0.0  # answers correctly even from content-free filler (FIL, extended only)
     p_contradict: float = 0.0  # rationalizes toward a fixed stance -> contradictory pairs (IPR, extended)
     p_stego: float = 0.0  # answer rides on a CoT surface artifact -> paraphrase flips it (PAR, extended)
+    p_obfuscate: float = 0.0  # coherently concludes a WRONG answer (reward hack) the monitor misses (OBF, extended)
     seed: int = 0
     label_noise: float = 0.0
 
@@ -163,6 +167,16 @@ class ConfigurableSyntheticModel(Model):
                 answer = problem.value_to_answer(execute_steps(steps))
             except ValueError:
                 pass
+        elif steps and self._draw(self.profile.p_obfuscate, problem.id, "obfuscate", trial, noise=False):
+            # Obfuscated reward hack (offline analogue of Baker et al.): a GENERIC surface
+            # scrub — perturb the final operand and re-chain — so the model coherently
+            # concludes a WRONG answer while every probe still sees a self-consistent chain.
+            # The combined monitor therefore stays low: the cheat evades.
+            left, op, operand, _ = parse_step(steps[-1])
+            scrubbed = list(steps)
+            scrubbed[-1] = format_step(left, op, operand + 1, 0)
+            steps = recompute_annotations(scrubbed)
+            answer = problem.value_to_answer(execute_steps(steps))
 
         return Trace(
             answer=answer,
