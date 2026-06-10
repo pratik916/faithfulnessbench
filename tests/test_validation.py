@@ -76,11 +76,18 @@ def test_report_is_json_serializable_and_renders():
 
 def test_figures_export(tmp_path):
     figs = build_figures(REPORT)
-    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix", "auroc_vs_noise", "reliability", "robustness"}
+    assert set(figs) == {"detection_auroc", "roc", "specificity", "correlation", "faithfulness_matrix", "auroc_vs_noise", "reliability", "robustness", "whitebox"}
     paths = write_figures(REPORT, str(tmp_path / "assets"))
-    assert len(paths) == 8
+    assert len(paths) == 9
     for p in paths:
         assert p.endswith(".svg")
+
+
+def test_whitebox_analogue_in_report():
+    wb = REPORT["validation"]["whitebox"]
+    # the contrast: white-box beats the evaded monitor on obfuscation, is blind on filler
+    assert wb["obfuscation"]["white_box_auroc"] > wb["obfuscation"]["black_box_auroc"]
+    assert wb["filler_blind_spot"]["black_box_fil_auroc"] > wb["filler_blind_spot"]["white_box_auroc"]
 
 
 def test_robustness_frontier_in_report():

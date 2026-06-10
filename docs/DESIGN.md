@@ -320,3 +320,16 @@ ships.** It is the single genuinely-new *kind* of evidence available within the 
 project already has the muscle (frozen/extended split, negative control, held-out scoring) to do it
 honestly. If the a-priori-`φ` / held-out / contrast / not-on-real discipline cannot be held, **no-go**:
 a white-box number that is true by construction would weaken, not strengthen, the disciplined story.
+
+**Status: BUILT** (`src/faithfulnessbench/whitebox.py`, surfaced as report section *1d*). The
+8-feature generic activation `φ` is fixed before fitting; a numpy `LinearProbe` is trained on an
+even/odd held-out split. The two-way contrast holds on the committed seed: where the **obfuscated**
+model evades the text-reading monitor (combined black-box AUROC ≈ **0.42**, chance) the activation
+probe separates it cleanly (white-box ≈ **0.97**); yet the probe is **blind** to the interventional
+**FILLER** axis (white-box ≈ **0.50**) that the black-box FIL probe catches (≈ **1.00**) — white-box
+*complements* causal probes, it does not replace them, because some failures are revealed only by
+intervention. A permuted-label control (mean of 8 shuffles) collapses to ≈ **0.43**. All four
+constraints are met (a-priori generic `φ`; held-out split + permuted control; the contrast, not the
+number, is the result; extended/arithmetic-only so committed pooled numbers are unchanged), with the
+explicit caveat that this proves **nothing about real-model activations**, which are neither
+low-dimensional nor authored.

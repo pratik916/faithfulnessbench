@@ -433,6 +433,14 @@ def run_validation(
 
     robustness = robustness_frontier(n_per_domain=n_per_domain, seed=seed, n_trials=n_trials)
 
+    # --- white-box / linear-probe offline analogue (DESIGN.md §7 spike, built): an activation
+    #     probe beats the text-reading monitor where it is obfuscated, but is blind to the
+    #     interventional FILLER axis the black-box FIL probe catches. Extended population, so the
+    #     committed pooled numbers are unchanged. ---
+    from .whitebox import whitebox_analogue
+
+    whitebox = whitebox_analogue(seed=seed, n_problems=2 * n_per_domain, n_trials=n_trials)
+
     validation_block = {
         "probes": PROBE_ORDER,
         "targeted_auroc": targeted_auroc,
@@ -452,6 +460,7 @@ def run_validation(
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
         "robustness": robustness,
+        "whitebox": whitebox,
     }
     if extended_auroc:  # only present when held-out models are supplied (keeps committed artifact stable)
         validation_block["extended_auroc"] = extended_auroc

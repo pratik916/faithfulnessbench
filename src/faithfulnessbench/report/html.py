@@ -242,6 +242,19 @@ def build_figures(report: dict) -> dict[str, str]:
             xmax=1.0, ymin=0.0, ymax=1.0,
         )
 
+    if "whitebox" in val:
+        wb = val["whitebox"]
+        figures["whitebox"] = svg.bar_chart(
+            [
+                ("obf · white-box", wb["obfuscation"]["white_box_auroc"]),
+                ("obf · black-box", wb["obfuscation"]["black_box_auroc"]),
+                ("filler · white-box", wb["filler_blind_spot"]["white_box_auroc"]),
+                ("filler · FIL probe", wb["filler_blind_spot"]["black_box_fil_auroc"]),
+            ],
+            title="White-box vs black-box AUROC (held-out): obfuscation vs filler",
+            baseline=0.5, color="#0891b2",
+        )
+
     return figures
 
 
@@ -330,6 +343,25 @@ def render_report(report: dict) -> str:
                      "is the model's answers, not the CoT text. This is exactly why a monitor leans on behavioral probes, not "
                      "readable-CoT alone. (Synthetic, deterministic — an offline analogue, not a real-adversary claim.)</p>")
         parts.append(f"<div class='chartrow'><div>{figures['robustness']}</div></div>")
+        parts.append("</section>")
+
+    # Section 1d — white-box / linear-probe offline analogue
+    if "whitebox" in val and "whitebox" in figures:
+        wb = val["whitebox"]
+        parts.append("<section><h2><span class='n'>1d</span>Would a white-box probe catch what the monitor misses?</h2>")
+        parts.append("<p class='lead'>An <strong>offline analogue</strong> of activation probing (cf. Apollo, "
+                     "<a href='https://arxiv.org/abs/2502.03407'>2502.03407</a>): give each synthetic model a generic, "
+                     "a-priori <em>activation</em> vector and fit a numpy logistic probe on a held-out split. Where the "
+                     "<strong>obfuscated</strong> model evades the text-reading monitor (black-box AUROC "
+                     f"<strong>{wb['obfuscation']['black_box_auroc']:.2f}</strong> ≈ chance), the white-box probe reads the "
+                     f"wrong-answer signal off the activation directly (<strong>{wb['obfuscation']['white_box_auroc']:.2f}</strong>). "
+                     "But it is <strong>blind</strong> to the interventional FILLER axis "
+                     f"(white-box <strong>{wb['filler_blind_spot']['white_box_auroc']:.2f}</strong> ≈ chance) that the black-box "
+                     f"FIL probe catches (<strong>{wb['filler_blind_spot']['black_box_fil_auroc']:.2f}</strong>) — the two are "
+                     f"complementary. A permuted-label control collapses to <strong>{wb['permuted_control_auroc']:.2f}</strong>. "
+                     "The white-box <em>numbers</em> are by construction (we authored both the activation and the label); the "
+                     "load-bearing result is the contrast, and it says nothing about real-model activations.</p>")
+        parts.append(f"<div class='chartrow'><div>{figures['whitebox']}</div></div>")
         parts.append("</section>")
 
     # Section 2 — orthogonality
