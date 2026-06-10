@@ -300,6 +300,53 @@ def catch_rate_at_fpr(
     }
 
 
+def cohen_kappa(a: ArrayLike, b: ArrayLike) -> float:
+    """Chance-corrected agreement between two binary raters (here: 'flagged unfaithful?').
+
+    ``kappa = (po - pe) / (1 - pe)`` where ``po`` is observed agreement and ``pe`` is the
+    agreement expected by chance from the marginals. 1 = perfect, 0 = chance, <0 = worse.
+    """
+    a = np.asarray(a)
+    b = np.asarray(b)
+    if a.size == 0:
+        return float("nan")
+    po = float(np.mean(a == b))
+    pa1, pb1 = float(np.mean(a == 1)), float(np.mean(b == 1))
+    pe = pa1 * pb1 + (1.0 - pa1) * (1.0 - pb1)
+    if pe >= 1.0:
+        return 1.0 if po >= 1.0 else float("nan")
+    return (po - pe) / (1.0 - pe)
+
+
+def holm_correction(pvalues: ArrayLike, *, alpha: float = 0.05) -> dict[str, list]:
+    """Holm–Bonferroni step-down correction for a family of p-values.
+
+    Returns family-wise-error-controlled adjusted p-values (in the input order) and a
+    reject mask at ``alpha`` — controls false positives across the whole family.
+    """
+    p = np.asarray(pvalues, dtype=float)
+    m = p.size
+    order = np.argsort(p)
+    adjusted = np.empty(m)
+    running = 0.0
+    for rank, idx in enumerate(order):
+        running = max(running, (m - rank) * float(p[idx]))
+        adjusted[idx] = min(running, 1.0)
+    return {"adjusted": adjusted.tolist(), "reject": (adjusted < alpha).tolist()}
+
+
+def permutation_test_auroc(
+    scores: ArrayLike, labels: ArrayLike, *, seed: int = 0, n_perm: int = 2000
+) -> float:
+    """One-sided permutation p-value for AUROC > chance (shuffle the labels)."""
+    scores = np.asarray(scores, dtype=float)
+    labels = np.asarray(labels)
+    obs = roc_auc(scores, labels)
+    rng = np.random.default_rng(seed)
+    ge = sum(1 for _ in range(n_perm) if roc_auc(scores, rng.permutation(labels)) >= obs)
+    return (ge + 1) / (n_perm + 1)
+
+
 def _placements(pos: np.ndarray, neg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """DeLong structural components: per-positive and per-negative placement values."""
     diff = pos[:, None] - neg[None, :]

@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-132%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![tests](https://img.shields.io/badge/tests-136%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -62,7 +62,7 @@ Because the dials are code, every `(model, problem)` carries a **known label**. 
   <img src="docs/assets/faithfulness_matrix.svg" width="52%" alt="Faithfulness by model and probe">
 </p>
 
-The correlation matrix (left) is a **sanity check that the probes don't spuriously co-fire**: on this single-axis population they agree only on the fully-unfaithful corner, so off-diagonal correlation is low (≈ 0.25 — a value set by the *population composition*, not a measured property of the probes, so it's a diagnostic rather than a headline number). The substantive, robust point is the faithfulness matrix on the right: the **`sycophant`** model scores **0.00 on SHI but 1.00 on SIM and CSC** — any single probe used alone would have cleared it. That's the case for reporting a **Faithfulness Card** — four sub-scores plus a transparent composite (the mean — intentionally not a learned weighting) — rather than a single faithfulness number.
+The correlation matrix (left) is a **sanity check that the probes don't spuriously co-fire**. Framed honestly as *chance-corrected agreement* on the binary "flagged unfaithful?" decision, the mean off-diagonal **Cohen's kappa ≈ 0** — the probes agree no more than chance off their shared corners. (The raw off-diagonal Spearman ≈ 0.25 says the same thing but is population-composition-dependent, so we don't lead with it.) The substantive, robust point is the faithfulness matrix on the right: the **`sycophant`** model scores **0.00 on SHI but 1.00 on SIM and CSC** — any single probe used alone would have cleared it. That's the case for reporting a **Faithfulness Card** — four sub-scores plus a transparent composite (the mean — intentionally not a learned weighting) — rather than a single faithfulness number.
 
 ## Quickstart
 

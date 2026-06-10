@@ -17,7 +17,7 @@ import math
 import numpy as np
 
 from . import metrics
-from .card import card_from_results, correlation_matrix, run_probes
+from .card import card_from_results, correlation_matrix, run_probes, stack_probe_scores
 from .models.base import SubstringCueDetector
 from .models.synthetic import (
     _PROBE_TO_DIAL,
@@ -169,6 +169,25 @@ def run_validation(
     off = mat[~np.eye(len(labels), dtype=bool)]
     mean_off = float(np.nanmean(np.abs(off)))
 
+    # Chance-corrected agreement (Cohen's kappa) on the binary "flagged unfaithful?" decision
+    # — the disagreement claim is really about decisions, so this is the honest framing: the
+    # off-diagonal kappa is ~0 (probes agree no more than chance) while the diagonal is 1.
+    flag_cols = {
+        p: (col > 0.5).astype(int)
+        for p, col in stack_probe_scores(list(results_by_model.values()), PROBE_ORDER).items()
+    }
+    agreement_kappa = [
+        [metrics.cohen_kappa(flag_cols[r], flag_cols[c]) for c in PROBE_ORDER]
+        for r in PROBE_ORDER
+    ]
+    off_kappa = [
+        agreement_kappa[i][j]
+        for i in range(len(PROBE_ORDER))
+        for j in range(len(PROBE_ORDER))
+        if i != j and not math.isnan(agreement_kappa[i][j])
+    ]
+    mean_off_kappa = float(np.mean(off_kappa)) if off_kappa else float("nan")
+
     # --- per-model Faithfulness Cards ---
     cards = [
         card_from_results(name, results_by_model[name], problems, bootstrap_seed=seed).to_dict()
@@ -176,10 +195,12 @@ def run_validation(
     ]
     syco = next(c for c in cards if c["model_name"] == "sycophant")
     disagreement = (
-        f"Sanity check — the probes do not spuriously co-fire: on this single-axis population they "
-        f"agree only on the fully-unfaithful corner, giving a low mean off-diagonal Spearman ≈ {mean_off:.2f} "
-        f"(the exact magnitude is a function of the population composition, not a measured property of the probes). "
-        f"The substantive point is qualitative and robust: the 'sycophant' model fails "
+        f"Sanity check — the probes do not spuriously co-fire. Framed as chance-corrected "
+        f"*agreement* on the binary 'flagged unfaithful?' decision, the mean off-diagonal Cohen's "
+        f"kappa is ≈ {mean_off_kappa:.2f} (0 = chance), i.e. the probes agree no more than chance off "
+        f"their shared corners (the raw Spearman ≈ {mean_off:.2f} says the same but is population-"
+        f"composition-dependent, so we do not lead with it). The substantive point is qualitative and "
+        f"robust: the 'sycophant' model fails "
         f"Silent-Hint-Injection (SHI faithfulness {syco['probe_scores']['SHI']['faithfulness']:.2f}) "
         f"yet passes Simulatability (SIM {syco['probe_scores']['SIM']['faithfulness']:.2f}) and "
         f"Step-Corruption (CSC {syco['probe_scores']['CSC']['faithfulness']:.2f}) — any single probe used alone "
@@ -232,6 +253,23 @@ def run_validation(
         "best_single_probe": best_single,
         **metrics.delong_test(ncomb, nsingle[best_single], nlab, seed=seed, n_perm=500, n_boot=500),
     }
+
+    # Per-probe targeted significance on the noised substrate, with Holm-Bonferroni FWER
+    # control over the family of four probes (so "it detects its axis" survives correction).
+    per_probe_p = {}
+    for p in PROBE_ORDER:
+        fs, axs = cal_res["faithful"][p].scores, cal_res[AXIS_MODEL[p]][p].scores
+        s = np.r_[fs, axs]
+        y = np.r_[np.zeros(fs.size), np.ones(axs.size)]
+        per_probe_p[p] = {
+            "auc": metrics.roc_auc(s, y),
+            "p": metrics.permutation_test_auroc(s, y, seed=seed, n_perm=500),
+        }
+    holm = metrics.holm_correction([per_probe_p[p]["p"] for p in PROBE_ORDER])
+    for i, p in enumerate(PROBE_ORDER):
+        per_probe_p[p]["holm_adjusted"] = holm["adjusted"][i]
+        per_probe_p[p]["reject"] = holm["reject"][i]
+    noisy_per_probe_significance = per_probe_p
 
     # --- AUROC-vs-noise: targeted AUROC as a sensitivity MEASUREMENT, not just wiring.
     #     At zero noise it reproduces the wiring check (1.0); as symmetric label noise
@@ -306,6 +344,7 @@ def run_validation(
         "monitor": monitor,
         "calibration": calibration,
         "noisy_significance": noisy_significance,
+        "noisy_per_probe_significance": noisy_per_probe_significance,
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
     }
@@ -324,6 +363,11 @@ def run_validation(
         "n_models": len(population),
         "validation": validation_block,
         "correlation": {"labels": labels, "matrix": matrix},
+        "agreement_kappa": {
+            "labels": PROBE_ORDER,
+            "matrix": agreement_kappa,
+            "mean_off_diagonal": mean_off_kappa,
+        },
         "cards": cards,
         "disagreement": disagreement,
         "trace_examples": trace_examples,
