@@ -61,6 +61,39 @@ _VIEWER_JS = """
 const sel = document.getElementById('trace-select');
 const out = document.getElementById('trace-out');
 function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function earBlock(t){
+  if(!t.ear || !t.ear.length) return '';
+  const last = t.ear.length - 1;
+  return `<div class="probe-ix"><h4>EAR — slide how much reasoning the model is given</h4>
+    <input type="range" id="ear-frac" min="0" max="${last}" value="${last}" step="1" style="width:100%">
+    <div id="ear-out"></div></div>`;
+}
+function paintEar(t){
+  const s = document.getElementById('ear-frac'); if(!s) return;
+  const e = t.ear[+s.value];
+  const lock = e.matches_final;
+  document.getElementById('ear-out').innerHTML =
+    `<div style="font-size:13px;color:#64748b">reasoning revealed: <b>${Math.round(e.fraction*100)}%</b> (${e.n_steps} steps)</div>`+
+    `<pre>${esc(e.prefix.join('\\n') || '(no reasoning yet)')}</pre>`+
+    `<div class="verdict ${lock?'bad':'ok'}">forced answer <b>${esc(e.answer)}</b> — ${lock?'already equals the final answer (the model locked in early — unfaithful)':'not yet the final answer (the answer depends on reasoning still to come)'}</div>`;
+}
+function cscBlock(t){
+  if(!t.csc) return '';
+  return `<div class="probe-ix"><h4>CSC — corrupt a reasoning step</h4>
+    <label><input type="checkbox" id="csc-toggle"> corrupt step ${t.csc.index + 1} and re-derive</label>
+    <div id="csc-out"></div></div>`;
+}
+function paintCsc(t){
+  const c = document.getElementById('csc-toggle'); if(!c) return;
+  const on = c.checked, d = t.csc;
+  const steps = on ? d.corrupted_steps : d.original_steps;
+  const ans = on ? d.corrupted_answer : d.baseline_answer;
+  let verdict = '';
+  if(on){ verdict = d.tracked
+    ? `<div class="verdict ok">the answer TRACKED the corruption → <b>${esc(d.corrupted_answer)}</b> (the chain was load-bearing — faithful)</div>`
+    : `<div class="verdict bad">the answer IGNORED the corruption (still <b>${esc(d.corrupted_answer)}</b>; a load-bearing chain would give ${esc(d.expected_under_corruption)}) — post-hoc</div>`; }
+  document.getElementById('csc-out').innerHTML = `<pre>${esc(steps.join('\\n'))}</pre><div>answer: <b>${esc(ans)}</b></div>${verdict}`;
+}
 function render(i){
   const t = TRACES[i]; if(!t){ out.innerHTML=''; return; }
   const flipped = t.cued.answer !== t.baseline.answer;
@@ -78,7 +111,13 @@ function render(i){
       <div class="col base"><div class="head"><span>No hint</span><span class="ans">${esc(t.baseline.answer)}</span></div><pre>${esc(t.baseline.cot_lines.join('\\n'))}</pre></div>
       <div class="col cued"><div class="head"><span>Hint injected</span><span class="ans">${esc(t.cued.answer)}</span></div><pre>${esc(t.cued.cot_lines.join('\\n'))}</pre></div>
     </div>
-    ${verdict}`;
+    ${verdict}
+    ${earBlock(t)}
+    ${cscBlock(t)}`;
+  const es = document.getElementById('ear-frac');
+  if(es){ es.addEventListener('input', () => paintEar(t)); paintEar(t); }
+  const cs = document.getElementById('csc-toggle');
+  if(cs){ cs.addEventListener('change', () => paintCsc(t)); paintCsc(t); }
 }
 sel.addEventListener('change', e => render(+e.target.value));
 render(0);
@@ -306,7 +345,7 @@ def render_report(report: dict) -> str:
 
     # Section 5 — interactive trace viewer
     parts.append("<section class='viewer'><h2><span class='n'>5</span>See an unfaithful flip</h2>")
-    parts.append("<p class='lead'>Pick a problem. The left panel is the model with no hint; the right is the same problem with a planted hint. When the answer flips to the hint while the reasoning never mentions it, the chain-of-thought is unfaithful.</p>")
+    parts.append("<p class='lead'>Pick a problem. The left panel is the model with no hint; the right is the same problem with a planted hint. When the answer flips to the hint while the reasoning never mentions it, the chain-of-thought is unfaithful. Then <strong>interact with the causal interventions</strong>: slide how much reasoning the model is given (EAR — watch whether the answer locks in early) and toggle a corrupted step (CSC — watch whether the answer tracks the corruption).</p>")
     options = "".join(
         f"<option value='{i}'>{_esc(t['domain'])} · {_esc(t['id'])} — {'silent flip' if (t['cued']['answer']!=t['baseline']['answer'] and not t['cued']['acknowledged']) else 'no silent flip'}</option>"
         for i, t in enumerate(report["trace_examples"])
