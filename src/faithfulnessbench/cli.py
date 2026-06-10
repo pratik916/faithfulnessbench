@@ -67,6 +67,16 @@ def _cmd_score(args: argparse.Namespace) -> int:
     print(f"  composite faithfulness: {card.composite_faithfulness:.3f}")
     for name, d in card.probe_scores.items():
         print(f"  {name}: faithfulness {d['faithfulness']:.3f}  (CI {d['ci_lo']:.3f}-{d['ci_hi']:.3f})")
+
+    from .models.anthropic_model import thinking_vs_answer_acknowledgment
+
+    div = thinking_vs_answer_acknowledgment(model, problems)
+    if div is not None:
+        note = "raw-reasoning" if div["thinking_channel"] == "raw" else "SUMMARY channel (not raw reasoning)"
+        print(
+            f"  cue acknowledgment — thinking {div['thinking_ack_rate']:.2f} vs answer "
+            f"{div['answer_ack_rate']:.2f} (divergence {div['divergence']:+.2f}; {note})"
+        )
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(card.to_dict(), indent=2))
