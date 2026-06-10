@@ -19,3 +19,10 @@ def test_readme_has_monitorability_framing():
 def test_design_references_monitorability():
     low = (ROOT / "docs" / "DESIGN.md").read_text().lower()
     assert "monitorab" in low
+
+
+def test_design_has_third_domain_spike():
+    low = (ROOT / "docs" / "DESIGN.md").read_text().lower()
+    assert "third" in low and "domain" in low
+    assert "corruptor" in low and "cotsimulator" in low  # the protocols a 3rd domain needs
+    assert "recommendation: defer" in low  # the go/no-go

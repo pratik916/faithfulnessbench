@@ -242,3 +242,27 @@ This is the most important honesty point in the project, so it is stated plainly
   reliability is a known dependency.
 - We measure *behavioral* faithfulness (black-box). White-box / activation-level
   faithfulness is out of scope and noted as future work.
+
+### Spike: scoping a third, structurally-different synthetic domain
+
+The two current domains (arithmetic chains, MCQ) share the same `L op R = V` step chain, so
+the model logic and all four probes are reused unchanged. A genuinely different domain (say
+**symbolic-logic / propositional entailment**, or **graph reachability**) would NOT reuse that
+chain, so it requires extracting four things behind protocols:
+
+1. **Step grammar + executor** — a domain `parse_step` / `execute_steps` / `recompute_annotations`
+   (CSC's corruptor and `ExactArithmeticSimulator` both assume the arithmetic grammar today).
+2. **A domain `Corruptor`** (the `Corruptor` protocol already exists) producing format-class-preserving
+   perturbations of a logic/graph step.
+3. **A domain `CoTSimulator`** that reads the stated conclusion in that domain (SIM).
+4. **A domain answer surface** — `Problem.value_to_answer` + `AnthropicModel._parse_answer`/`_answer_kind`,
+   plus a `Cue` family pointing at a plausible-wrong conclusion (SHI), and a prefix→partial-answer
+   rule (EAR).
+
+Per-probe adapters: SHI needs domain cues; CSC a domain corruptor+executor; SIM a domain simulator;
+EAR a domain prefix-answer. The `Model` interface (`reason`/`continue_from_cot`/`answer_from_prefix`)
+and the metrics/validation layer are domain-agnostic and need no change. **Effort estimate:** ~M–L
+(it is effectively a second small problem world plus four protocol implementations and their tests).
+**Recommendation: defer** — the cheapest "does it generalize?" evidence is GSM8K real grade-school
+math on the real-model path (a cached substrate), not a second from-scratch synthetic domain; build
+a third domain only if a reviewer specifically wants synthetic ground truth outside arithmetic.
