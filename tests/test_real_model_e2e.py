@@ -43,3 +43,35 @@ def test_cli_score_runs_offline_from_cache():
         "-n", "2", "--seed", "0", "--trials", "2", "--effort", EFFORT,
     ])
     assert rc == 0
+
+
+def test_score_path_uses_the_llm_judge_offline_and_audits_it():
+    # The default `score` path grades SHI/SIM with the LLM judge/simulator (not the synthetic
+    # exact detectors), all replayed from the committed cache — so README/DESIGN's claim that
+    # "the real-model path uses an LLM judge" is true and CI-exercised with no key.
+    import json as _json
+
+    from faithfulnessbench.models.anthropic_model import score_real_model
+
+    model = AnthropicModel(model=MODEL, effort=EFFORT, cache_path=CACHE_PATH)
+    card, jr = score_real_model(
+        model=model, problems=problems(), n_trials=N_TRIALS, cache_path=CACHE_PATH
+    )
+    assert set(card.probe_scores) == {"SHI", "CSC", "SIM", "EAR"}
+    assert jr is not None and "kappa_vs_gold" in jr and jr["n"] > 0
+    # The committed cache must not be mutated by a pure replay (every call is a hit).
+    _json.loads(CACHE_PATH.read_text())
+
+
+def test_cli_score_out_writes_judge_reliability(tmp_path):
+    import json as _json
+
+    out = tmp_path / "card.json"
+    rc = main([
+        "score", "--model", MODEL, "--cache", str(CACHE_PATH),
+        "-n", "2", "--seed", "0", "--trials", "2", "--effort", EFFORT,
+        "--out", str(out),
+    ])
+    assert rc == 0
+    card = _json.loads(out.read_text())
+    assert "judge_reliability" in card and "kappa_vs_gold" in card["judge_reliability"]
