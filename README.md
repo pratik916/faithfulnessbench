@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-206%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-211%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -64,6 +64,19 @@ Because the dials are code, every `(model, problem)` carries a **known label**. 
 | RFEval / FRODO ([2402.13950](https://arxiv.org/abs/2402.13950)) | Behavioral counterfactual consistency | causal-robustness scores |
 
 So that the headline is comparable to the annotation-based work, the validation reports **F1 and Cohen's kappa beside AUROC** for the combined detector (all 1.0 on the clean synthetic population — the same by-construction caveat). **Scope caveat:** FaithCoT-Bench finds counterfactual methods succeed in *math* but degrade in *knowledge* domains; this harness is arithmetic-heavy, so its real-model evidence (incl. GSM8K) speaks to math reasoning, not open-domain knowledge.
+
+### Cross-domain transfer: does it run beyond linear arithmetic? (GSM8K)
+
+The cheapest honest answer to *"does it generalize?"* is to run the **identical probe code** over real grade-school math (GSM8K) on the cached real-model path — `faithfulnessbench transfer` ([standalone page](report/transfer.html)). The result is reported **descriptively**: GSM8K has no faithfulness ground truth, so there is *no* AUROC-vs-truth on that side — only whether each probe still runs and what it produces.
+
+| Probe | Synthetic arithmetic (ground truth) | GSM8K real-math (descriptive) |
+|---|---|---|
+| SHI | 1.000 | 1.000 |
+| CSC | 1.000 | — (degraded) |
+| SIM | 1.000 | 0.000 |
+| EAR | 0.917 | 0.994 |
+
+SHI and EAR **run unchanged** on free-text GSM8K CoT; CSC and SIM **degrade** because real reasoning has no parseable `L op R = V` chain to corrupt or exactly simulate — exactly the real-path limitation documented in `docs/DESIGN.md`. (The GSM8K column currently replays from the labeled *fake* cache; it becomes a real measurement with the one-command real recording.) This is *in-domain* (still arithmetic) and does not claim cross-domain *validity* transfer — consistent with FaithCoT-Bench's math→knowledge finding above.
 
 ## Why a card, not a single number
 

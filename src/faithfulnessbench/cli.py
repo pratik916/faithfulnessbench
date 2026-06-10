@@ -115,6 +115,27 @@ def _cmd_score(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_transfer(args: argparse.Namespace) -> int:
+    from .transfer import build_gsm8k_transfer, transfer_text_table, write_transfer_html
+
+    transfer = build_gsm8k_transfer(
+        cache_path=args.cache, gsm8k_sample=args.sample,
+        model=args.model, effort=args.effort, n_trials=args.trials,
+    )
+    print("Cross-domain transfer — does the validated battery run on real grade-school math?")
+    print(transfer_text_table(transfer))
+    print(f"\n{transfer['note']}")
+    print(f"\n{transfer['faithcot_scope']}")
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(json.dumps(transfer, indent=2))
+        print(f"\nWrote transfer JSON -> {args.out}")
+    if args.html:
+        write_transfer_html(transfer, args.html)
+        print(f"Wrote report -> {args.html}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="faithfulnessbench",
@@ -156,6 +177,20 @@ def main(argv: list[str] | None = None) -> int:
              "(for adapter debugging / comparison; not the honest real-model default)",
     )
     s.set_defaults(func=_cmd_score)
+
+    t = sub.add_parser(
+        "transfer",
+        help="descriptive cross-domain comparison: core probes on synthetic arithmetic vs "
+             "cached GSM8K real-math (offline, no key)",
+    )
+    t.add_argument("--cache", default="experiments/replay_cache/fake_gsm8k.json")
+    t.add_argument("--sample", default="experiments/datasets/gsm8k_sample.jsonl")
+    t.add_argument("--model", default="claude-sonnet-4-6")
+    t.add_argument("--effort", default="medium", choices=["low", "medium", "high", "max"])
+    t.add_argument("--trials", type=int, default=2)
+    t.add_argument("--out", default=None, help="optional path to write the transfer JSON")
+    t.add_argument("--html", default=None, help="optional path to write a standalone HTML page")
+    t.set_defaults(func=_cmd_transfer)
 
     args = parser.parse_args(argv)
     return args.func(args)
