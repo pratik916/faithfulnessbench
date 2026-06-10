@@ -213,6 +213,26 @@ def run_validation(
         "reliability": metrics.reliability_curve(cc, clab),
     }
 
+    # --- significance of combined-vs-best-single on the NOISY substrate (DeLong + paired
+    #     permutation). NOT applied to the zero-noise gap (a population identity, not a
+    #     measurement — testing it would manufacture inference over a constant). ---
+    n_combined, n_labels = [], []
+    n_per_probe: dict[str, list] = {p: [] for p in PROBE_ORDER}
+    for name, res in cal_res.items():
+        comb = np.vstack([res[p].scores for p in PROBE_ORDER]).mean(axis=0)
+        n_combined.append(comb)
+        n_labels.append(np.zeros(comb.size) if name == "faithful" else np.ones(comb.size))
+        for p in PROBE_ORDER:
+            n_per_probe[p].append(res[p].scores)
+    ncomb, nlab = np.concatenate(n_combined), np.concatenate(n_labels)
+    nsingle = {p: np.concatenate(n_per_probe[p]) for p in PROBE_ORDER}
+    best_single = max(PROBE_ORDER, key=lambda p: metrics.roc_auc(nsingle[p], nlab))
+    noisy_significance = {
+        "substrate": f"label_noise={CAL_NOISE}",
+        "best_single_probe": best_single,
+        **metrics.delong_test(ncomb, nsingle[best_single], nlab, seed=seed, n_perm=500, n_boot=500),
+    }
+
     # --- AUROC-vs-noise: targeted AUROC as a sensitivity MEASUREMENT, not just wiring.
     #     At zero noise it reproduces the wiring check (1.0); as symmetric label noise
     #     rises the synthetic classes overlap and AUROC falls toward chance — so the
@@ -285,6 +305,7 @@ def run_validation(
         "single_mixed_auroc": single_mixed_auroc,
         "monitor": monitor,
         "calibration": calibration,
+        "noisy_significance": noisy_significance,
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
     }

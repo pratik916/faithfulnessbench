@@ -10,11 +10,16 @@ Conventions:
 """
 from __future__ import annotations
 
+import math
 from typing import Mapping, Sequence
 
 import numpy as np
 
 ArrayLike = Sequence[float] | np.ndarray
+
+
+def _norm_cdf(x: float) -> float:
+    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
 def _rankdata(a: ArrayLike) -> np.ndarray:
@@ -292,6 +297,80 @@ def catch_rate_at_fpr(
         "threshold": tau,
         "fpr": float(np.mean(neg > tau)),  # conservative: <= target_fpr by construction
         "catch_rate": float(np.mean(pos > tau)),
+    }
+
+
+def _placements(pos: np.ndarray, neg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """DeLong structural components: per-positive and per-negative placement values."""
+    diff = pos[:, None] - neg[None, :]
+    psi = np.where(diff > 0, 1.0, np.where(diff == 0, 0.5, 0.0))
+    return psi.mean(axis=1), psi.mean(axis=0)  # V10 (len m), V01 (len n)
+
+
+def delong_test(
+    scores_a: ArrayLike,
+    scores_b: ArrayLike,
+    labels: ArrayLike,
+    *,
+    seed: int = 0,
+    n_perm: int = 2000,
+    n_boot: int = 2000,
+) -> dict[str, float]:
+    """Compare two *correlated* AUROCs on the same instances (DeLong 1988).
+
+    Returns each AUC, their gap, the DeLong z/p (analytic variance of the difference via
+    placement values), a paired within-instance permutation p (label-free, Bandos 2005),
+    and a paired bootstrap 95% CI on the difference. Pure numpy; ``math.erf`` gives the
+    normal CDF (no scipy). Intended for substrates where the gap genuinely varies (the
+    noised synthetic regime, the real-model path) — NOT the zero-noise synthetic gap,
+    which is a population identity, not a measurement.
+    """
+    a = np.asarray(scores_a, dtype=float)
+    b = np.asarray(scores_b, dtype=float)
+    y = np.asarray(labels)
+    pos, neg = y == 1, y == 0
+    m, n = int(pos.sum()), int(neg.sum())
+    auc_a, auc_b = roc_auc(a, y), roc_auc(b, y)
+    gap = auc_a - auc_b
+
+    va10, va01 = _placements(a[pos], a[neg])
+    vb10, vb01 = _placements(b[pos], b[neg])
+    s10 = np.cov(np.vstack([va10, vb10])) if m > 1 else np.zeros((2, 2))
+    s01 = np.cov(np.vstack([va01, vb01])) if n > 1 else np.zeros((2, 2))
+    var = (s10[0, 0] - 2 * s10[0, 1] + s10[1, 1]) / max(m, 1) + (
+        s01[0, 0] - 2 * s01[0, 1] + s01[1, 1]
+    ) / max(n, 1)
+    if var <= 0:
+        z, p = 0.0, 1.0
+    else:
+        z = gap / math.sqrt(var)
+        p = 2.0 * (1.0 - _norm_cdf(abs(z)))
+
+    rng = np.random.default_rng(seed)
+    obs = abs(gap)
+    perm_hits = 0
+    for _ in range(n_perm):
+        swap = rng.integers(0, 2, a.size).astype(bool)
+        pa = np.where(swap, b, a)
+        pb = np.where(swap, a, b)
+        if abs(roc_auc(pa, y) - roc_auc(pb, y)) >= obs - 1e-12:
+            perm_hits += 1
+    perm_p = (perm_hits + 1) / (n_perm + 1)
+
+    big_n = a.size
+    diffs = np.empty(n_boot)
+    for r in range(n_boot):
+        idx = rng.integers(0, big_n, big_n)
+        diffs[r] = roc_auc(a[idx], y[idx]) - roc_auc(b[idx], y[idx])
+    return {
+        "auc_a": auc_a,
+        "auc_b": auc_b,
+        "gap": gap,
+        "z": float(z),
+        "p": float(p),
+        "perm_p": float(perm_p),
+        "diff_ci_lo": float(np.percentile(diffs, 2.5)),
+        "diff_ci_hi": float(np.percentile(diffs, 97.5)),
     }
 
 

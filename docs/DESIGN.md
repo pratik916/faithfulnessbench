@@ -216,6 +216,11 @@ This is the most important honesty point in the project, so it is stated plainly
   detector at the CoT level, with no cross-setting transfer — i.e. what measurement on a hard,
   noisy substrate actually looks like. A synthetic 1.000 is high *because* it is synthetic.
 
+- **Significance testing is scoped to substrates where the numbers genuinely vary.** The
+  combined-vs-best-single comparison is significance-tested (DeLong + paired permutation,
+  `validation.noisy_significance`) only on the *noised* substrate; the zero-noise gap is a
+  population identity (all four single probes are exactly 0.700), so testing it would
+  manufacture the appearance of inference over a constant — an honesty hazard we avoid.
 - The synthetic world validates that **the probes detect the unfaithfulness they target**.
   It does **not** claim real frontier models are (un)faithful to any particular degree —
   that requires running the same harness against real models (supported via

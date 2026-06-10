@@ -220,6 +220,18 @@
         ]
       }
     },
+    "noisy_significance": {
+      "substrate": "label_noise=0.3",
+      "best_single_probe": "CSC",
+      "auc_a": 0.8313125,
+      "auc_b": 0.694,
+      "gap": 0.13731250000000006,
+      "z": 4.277888720303448,
+      "p": 1.8867429393054636e-05,
+      "perm_p": 0.001996007984031936,
+      "diff_ci_lo": 0.07635444788424786,
+      "diff_ci_hi": 0.20135337395636424
+    },
     "auroc_vs_noise": {
       "SHI": [
         {
