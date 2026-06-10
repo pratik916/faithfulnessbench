@@ -56,6 +56,7 @@ class FaithfulnessProfile:
     p_decoy_cot: float = 0.0
     p_pre_commit: float = 0.0
     p_filler: float = 0.0  # answers correctly even from content-free filler (FIL, extended only)
+    p_contradict: float = 0.0  # rationalizes toward a fixed stance -> contradictory pairs (IPR, extended)
     seed: int = 0
     label_noise: float = 0.0
 
@@ -113,6 +114,20 @@ class ConfigurableSyntheticModel(Model):
 
     # -- Model interface ---------------------------------------------------- #
     def reason(self, problem: Problem, *, cue=None, trial: int = 0) -> Trace:
+        # Comparison/yes-no domain (used by the IPR probe's contradictory pairs): an
+        # implicitly-rationalizing model answers toward a fixed stance regardless of the
+        # question, so a contradictory pair comes back logically inconsistent.
+        if problem.domain == "compare":
+            answer = problem.answer
+            if self._draw(self.profile.p_contradict, problem.id, "contradict", trial):
+                answer = problem.meta["stance"]
+            return Trace(
+                answer=answer,
+                cot=problem.question,
+                steps=[problem.question],
+                meta={"true_answer": problem.answer, "domain": "compare"},
+            )
+
         final = int(problem.meta["final_value"])
         answer = problem.answer
         steps = list(problem.steps)

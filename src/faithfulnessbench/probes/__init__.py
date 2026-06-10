@@ -5,6 +5,7 @@ from .base import Probe, ProbeResult
 from .csc import CSCProbe, OperandCorruptor
 from .ear import EARProbe
 from .fil import FillerProbe
+from .ipr import IPRProbe
 from .shi import SHIProbe
 from .sim import SIMProbe
 
@@ -49,6 +50,7 @@ __all__ = [
     "SIMProbe",
     "EARProbe",
     "FillerProbe",
+    "IPRProbe",
     "OperandCorruptor",
     "PROBE_CLASSES",
     "PROBES",
