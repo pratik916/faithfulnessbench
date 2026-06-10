@@ -27,8 +27,19 @@ dependencies = ["numpy>=1.24"]
 [project.optional-dependencies]
 # Needed only to score *real* models; the synthetic validation needs none of this.
 anthropic = ["anthropic>=0.40"]
-dev = ["pytest>=7"]
-all = ["anthropic>=0.40", "pytest>=7"]
+dev = ["pytest>=7", "ruff>=0.6", "coverage>=7"]
+all = ["anthropic>=0.40", "pytest>=7", "ruff>=0.6", "coverage>=7"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# E501: long lines are fine (esp. inline SVG/HTML f-strings). B905/B018/B008: the zip()s,
+# Protocol `...` stubs, and default-arg detectors are intentional here. mypy is deferred
+# (near-zero annotations today; a separate multi-day cleanup).
+ignore = ["E501", "B905", "B018", "B008"]
 
 [project.scripts]
 faithfulnessbench = "faithfulnessbench.cli:main"

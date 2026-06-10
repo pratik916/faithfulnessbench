@@ -7,11 +7,17 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          # numpy-3.14-wheel scarcity is the reason this project is numpy-only, so 3.14 is
+          # on-narrative; also prove the suite passes on macOS.
+          - os: macos-latest
+            python-version: "3.14"
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -20,8 +26,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: pip install -e ".[dev]"
-      - name: Run tests
-        run: pytest -q
+      - name: Lint (ruff)
+        run: ruff check src tests experiments tools
+      - name: Run tests with coverage
+        run: |
+          coverage run --source=src/faithfulnessbench -m pytest -q
+          coverage report
+      # NOTE: mypy is intentionally deferred — the codebase has near-zero annotations today,
+      # so a type-check gate is a separate, multi-day cleanup tracked as future work.
       - name: Check the advertised test count has not drifted
         run: python tools/check_test_count.py
       - name: Regression-gate the committed results.json (recompute & diff, never overwrites)

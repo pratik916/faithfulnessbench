@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import html
 import math
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 
 def _esc(text: object) -> str:

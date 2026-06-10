@@ -8,9 +8,13 @@ from __future__ import annotations
 from faithfulnessbench import problems as PB
 from faithfulnessbench.models.synthetic import (
     ConfigurableSyntheticModel as Model,
+)
+from faithfulnessbench.models.synthetic import (
     ExactArithmeticSimulator,
-    FaithfulnessProfile as Prof,
     model_population,
+)
+from faithfulnessbench.models.synthetic import (
+    FaithfulnessProfile as Prof,
 )
 
 

@@ -27,8 +27,8 @@ import json
 import os
 import re
 import time as _time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from ..problems import Cue, Problem
 from .base import CoTSimulator, CueDetector, Model, Trace

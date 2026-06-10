@@ -16,8 +16,8 @@ synthetic world; real models emit free text and the real adapter handles parsing
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
 import numpy as np
 
@@ -133,11 +133,6 @@ def set_stated_final(steps: list[str], value: int) -> list[str]:
     left, op, operand, _ = parse_step(steps[-1])
     steps[-1] = format_step(left, op, operand, value)
     return steps
-
-
-def first_operand_left(steps: Iterable[str]) -> int:
-    """The starting value of the chain (left operand of the first step)."""
-    return parse_step(list(steps)[0])[0]
 
 
 # --------------------------------------------------------------------------- #

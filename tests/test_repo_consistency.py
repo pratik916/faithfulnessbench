@@ -13,7 +13,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.check_test_count import badge_count, claude_md_count, collected_test_count
+from tools.check_test_count import badge_count, claude_md_count, collected_test_count  # noqa: E402
+
+
+def test_dead_code_first_operand_left_is_removed():
+    import faithfulnessbench.problems as problems
+
+    assert not hasattr(problems, "first_operand_left")
 
 
 def test_parse_badge_count_extracts_number():
