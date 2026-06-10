@@ -28,3 +28,8 @@ env/
 # Model record/replay caches are large and regenerable; the committed
 # `experiments/results/` artifacts (json + svg + html) are intentionally tracked.
 .fb_cache/
+
+# Local-only planning & spec docs (roadmaps, design specs) — kept on disk for the author,
+# deliberately not part of the public repo (docs/DESIGN.md is the public methodology doc).
+planning/
+docs/superpowers/
