@@ -34,3 +34,9 @@ def test_readme_links_the_live_pages_demo():
     rd = (ROOT / "README.md").read_text()
     assert "pratik916.github.io/faithfulnessbench" in rd
     assert "live interactive report" in rd.lower()
+
+
+def test_readme_embeds_the_committed_trace_viewer_gif():
+    gif = ROOT / "docs" / "assets" / "trace_viewer.gif"
+    assert gif.exists() and gif.stat().st_size > 1000  # real animated file, committed
+    assert "docs/assets/trace_viewer.gif" in (ROOT / "README.md").read_text()

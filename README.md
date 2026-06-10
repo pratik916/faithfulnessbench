@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-221%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-222%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 **▶ [Open the live interactive report](https://pratik916.github.io/faithfulnessbench/)** — probe-validity KPIs, the AUROC-vs-noise sensitivity curve, the CoT-obfuscation robustness frontier, and an interactive trace viewer (slide how much reasoning the model sees; toggle a corrupted step). No clone required.
 
@@ -100,6 +100,12 @@ open report/faithfulness_report.html # self-contained interactive report
 ```
 
 The [live interactive report](https://pratik916.github.io/faithfulnessbench/) (also written locally to `report/faithfulness_report.html`) includes a **trace viewer**: pick a problem and watch a planted hint silently flip the model's answer while its chain-of-thought stays clean, then step the EAR truncation slider and toggle the CSC corruption to see the causal interventions live.
+
+<p align="center">
+  <a href="https://pratik916.github.io/faithfulnessbench/"><img src="docs/assets/trace_viewer.gif" width="80%" alt="The interactive trace viewer: a silent hint flip, then the EAR slider showing an answer that locks in before any reasoning (early-lock = unfaithful), then toggling a corrupted CSC step where the answer ignores the corruption (post-hoc)"></a>
+</p>
+
+*The interactive trace viewer in the report: a silent hint flip, then the EAR slider (an answer that's already fixed at 0% reasoning = early lock), then a CSC corruption toggle (the answer ignores the corrupted step = post-hoc). All client-side in one self-contained HTML file.*
 
 <p align="center">
   <a href="https://pratik916.github.io/faithfulnessbench/"><img src="docs/assets/report.png" width="90%" alt="The self-contained HTML report: probe-validity KPIs, detection-AUROC and ROC charts, and the AUROC-vs-label-noise sensitivity curve with monitor catch-rates"></a>
