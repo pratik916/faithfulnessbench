@@ -11,6 +11,22 @@ from faithfulnessbench.report.html import _safe_json_for_script
 P = arithmetic_chain_problems(1, seed=0)[0]
 
 
+def test_two_caches_on_same_path_do_not_stomp_each_other(tmp_path):
+    # The real-model path runs a main model and a separate LLM judge/simulator, each with
+    # its own cache instance on the same file. A naive whole-file rewrite would lose one
+    # side's entries; put() must merge so the offline replay has every recorded call.
+    from faithfulnessbench.models.anthropic_model import _JsonCache
+
+    path = tmp_path / "cache.json"
+    a = _JsonCache(path)
+    b = _JsonCache(path)
+    a.put("ka", ("cot-a", "ANSWER: 1"))
+    b.put("kb", ("cot-b", "ANSWER: 2"))
+    fresh = _JsonCache(path)
+    assert fresh.get("ka") == ["cot-a", "ANSWER: 1"]
+    assert fresh.get("kb") == ["cot-b", "ANSWER: 2"]
+
+
 def test_retries_transient_errors_then_succeeds():
     calls = {"n": 0}
 
@@ -64,6 +80,20 @@ def test_not_truncated_on_normal_stop():
     m = AnthropicModel("claude-opus-4-8", client=_client(truncated=False))
     m.reason(P)
     assert m.call_log[-1]["truncated"] is False
+
+
+def test_reason_trace_carries_truncation_flag_and_model_counts_it():
+    m = AnthropicModel("claude-opus-4-8", client=_client(truncated=True))
+    tr = m.reason(P)
+    assert tr.meta.get("truncated") is True
+    assert m.truncated_calls == 1
+
+
+def test_reason_trace_not_truncated_on_normal_stop():
+    m = AnthropicModel("claude-opus-4-8", client=_client(truncated=False))
+    tr = m.reason(P)
+    assert tr.meta.get("truncated") is False
+    assert m.truncated_calls == 0
 
 
 def test_safe_json_escapes_script_and_line_separators():

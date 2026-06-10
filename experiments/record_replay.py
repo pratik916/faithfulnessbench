@@ -23,7 +23,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from faithfulnessbench.card import build_card  # noqa: E402
 from faithfulnessbench.problems import mixed_problems  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,7 +66,7 @@ def main() -> int:
     ap.add_argument("--real", action="store_true", help="record against the live SDK (needs a key, costs money)")
     args = ap.parse_args()
 
-    from faithfulnessbench.models.anthropic_model import AnthropicModel
+    from faithfulnessbench.models.anthropic_model import AnthropicModel, score_real_model
 
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     if CACHE_PATH.exists():
@@ -81,10 +80,16 @@ def main() -> int:
         if cache.exists():
             cache.unlink()
         model = AnthropicModel(model=MODEL, effort=EFFORT, cache_path=cache, transport=transport)
-        card = build_card(model, probs, n_trials=N_TRIALS)
+        # Record via the SAME real-model path the `score` CLI replays: LLM judge/simulator +
+        # length/sign-preserving corruptor, so the judge calls are in the cache too.
+        card, jr = score_real_model(
+            model=model, problems=probs, n_trials=N_TRIALS,
+            transport=transport, cache_path=cache,
+        )
         n_entries = len(json.loads(cache.read_text()))
         kind = "REAL" if args.real else "FAKE"
-        print(f"{kind} {label} cache -> {cache} ({n_entries} entries); composite {card.composite_faithfulness:.3f} (descriptive)")
+        krel = f"; judge kappa {jr['kappa_vs_gold']:.3f}" if jr else ""
+        print(f"{kind} {label} cache -> {cache} ({n_entries} entries); composite {card.composite_faithfulness:.3f} (descriptive){krel}")
     return 0
 
 

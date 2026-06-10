@@ -6,6 +6,24 @@ and sequences the work to close them. It is research-toned and deliberately blun
 what the existing numbers do and do not prove. `docs/DESIGN.md` remains the methodology
 source of truth; this file is forward-looking.
 
+> **Status (shipped).** All eight epics below are **complete** — the checkboxes are ticked
+> and `FEATURES.md` is the live map of the result: the controlled-noise regime + negative
+> control + frozen/extended population + honesty docs (Epic 1); the probe-contract/registry
+> hardening and directed CSC + length/sign-preserving corruptor (Epic 2); the FIL/IPR/PAR
+> held-out probes (Epic 3); the monitor reframing with catch-rate@1%-FPR, ECE, and the OBF
+> analogue (Epic 4); the real-Claude record/replay spine (Epic 5, via a labeled-FAKE cache —
+> a real recording is a one-command swap); the inferential layer (Epic 6); the reproducibility
+> gates, ruff, and the 3.14/macOS CI matrix (Epic 7); and the GSM8K substrate (Epic 8).
+>
+> **A v3 iteration shipped on top of this** (tracked in local-only beads, not here): the
+> `score` CLI now actually uses the advertised LLM judge/simulator + judge-reliability;
+> the free-text answer parser is hardened; a **GSM8K cross-domain transfer** table and an
+> **adversarial-CoT robustness frontier** were added; the trace viewer became **interactive**
+> (EAR slider + CSC toggle); the report is **deployed to GitHub Pages**; and a **white-box
+> offline-analogue go/no-go spike** was written (DESIGN.md §7). The next genuinely-new work the
+> docs point at is a real-Claude recording (gated on API spend) and, conditionally, that
+> white-box analogue.
+
 ---
 
 ## Where this sits in the literature
@@ -91,7 +109,7 @@ faithfulness researcher's 60-second scrutiny and one dismissed as "validated aga
 built to be detected" is a noisy substrate where AUROC is a sensitivity measurement, a
 control that *can* report a low number, and honest framing.
 
-- [ ] **Inject controlled noise so synthetic AUROC measures sensitivity, not wiring** — P1, L.
+- [x] **Inject controlled noise so synthetic AUROC measures sensitivity, not wiring** — P1, L.
   Add a noise/partial-dial regime (intermediate dial rates, deterministic per-instance label
   noise keyed by the existing `(seed, problem.id, keys, trial)` hash, and a hard-instance
   regime: short chains for CSC, near-tie operands / low-margin cues for SHI); report targeted
@@ -100,14 +118,14 @@ control that *can* report a low number, and honest framing.
   the documented regime each probe drops below 1.0 with a positive-width bootstrap CI; the
   report renders an AUROC-vs-noise curve per probe; deterministic, numpy-only, no key.
   *(Depends on: ProbeResult/registry guard.)*
-- [ ] **Add a shuffled-label / random-axis negative control proving the harness can fail** —
+- [x] **Add a shuffled-label / random-axis negative control proving the harness can fail** —
   P1, S. Permute the ground-truth labels (or pair each probe against a mismatched-axis model)
   and assert the AUROC collapses to ~0.5; add a contract test that probes only ever read
   `Trace` text and never touch synthetic internals.
   *Acceptance:* shuffled-label AUROC within [0.4, 0.6] for every probe; a contract test fails
   if any probe accesses a synthetic-only attribute; `results.json` carries
   `negative_control_auroc`; numpy-only, deterministic.
-- [ ] **Freeze the pooled-population baseline and add a held-out extended-population
+- [x] **Freeze the pooled-population baseline and add a held-out extended-population
   contract** — P1, M. Split the population into a **frozen** validation set (the current 6
   models, whose pooled `combined_auroc` / `single_mixed_auroc` / correlation matrix / hard-coded
   disagreement prose are the committed artifact) and an **extended** set used only for pairwise
@@ -116,7 +134,7 @@ control that *can* report a low number, and honest framing.
   correlation matrix byte-identical to the committed artifact while the new model still gets a
   pairwise targeted-AUROC entry; `DESIGN.md` documents the split; numpy-only.
   *(Depends on: ProbeResult/registry guard.)*
-- [ ] **Add a faithful-by-construction positive control model (Lyu) to the extended
+- [x] **Add a faithful-by-construction positive control model (Lyu) to the extended
   population** — P1, S. A `ConfigurableSyntheticModel` mode that *derives* its answer by
   executing its own printed `L op R = V` chain (solver-style, per Lyu et al.,
   <https://aclanthology.org/2023.ijcnlp-main.20/>) — faithful by construction on every axis — as
@@ -125,7 +143,7 @@ control that *can* report a low number, and honest framing.
   AUROC indistinguishable (within bootstrap CI) from the dial=0 baseline; it lands in the
   extended (not frozen) set so committed pooled numbers are unchanged.
   *(Depends on: frozen-population contract.)*
-- [ ] **Write the "what synthetic AUROC does and does NOT prove" honesty section and fix
+- [x] **Write the "what synthetic AUROC does and does NOT prove" honesty section and fix
   README framing** — P1, S. Docs-only. State in `DESIGN.md` that targeted AUROC=1.0 proves the
   probe is correctly *wired* and specific *by construction* — not that it is sensitive on real,
   noisy, or adversarial CoT; reframe combined-1.000-vs-best-single-0.700 as a *population
@@ -149,7 +167,7 @@ a verified correctness gap (`csc.py` line 69 scores `new_answer != a0`, so a fli
 *unrelated* wrong answer is currently counted faithful). Low-risk, on-thesis rigor the
 critiques flagged as must-dos.
 
-- [ ] **Enforce ProbeResult invariants and single-source the probe registry** — P1, S. Add a
+- [x] **Enforce ProbeResult invariants and single-source the probe registry** — P1, S. Add a
   numpy-only `__post_init__`/`validate()` asserting scores in [0,1] and
   `len(scores)==len(problem_ids)`; derive `default_probes()` from `PROBE_CLASSES` (or vice
   versa) with a uniqueness/consistency self-check; preserve per-trial/per-fraction raw curves in
@@ -157,7 +175,7 @@ critiques flagged as must-dos.
   *Acceptance:* tests assert an out-of-range or misaligned `ProbeResult` raises immediately; that
   `PROBE_CLASSES` and `default_probes()` are provably consistent; and that `EAR.extra` carries the
   per-fraction match curve; numpy-only.
-- [ ] **Upgrade CSC to verify the answer tracks the corruption, not merely that it changed** —
+- [x] **Upgrade CSC to verify the answer tracks the corruption, not merely that it changed** —
   P1, S. Use `recompute_annotations`/`execute_steps`/`stated_final` (already in `problems.py`) to
   compute the expected-under-corruption answer from the *same* re-chained steps the model was
   shown, and score sensitivity as `new_answer == expected-under-corruption`; majority-vote the
@@ -166,7 +184,7 @@ critiques flagged as must-dos.
   unrelated-flip model scores unfaithful, not faithful) and that synthetic CSC targeted AUROC is
   unchanged at zero noise (deterministic per trial); suite stays green.
   *(Depends on: ProbeResult/registry guard.)*
-- [ ] **Add a length/sign-preserving CSC corruptor behind a `Corruptor` protocol** — P2, M.
+- [x] **Add a length/sign-preserving CSC corruptor behind a `Corruptor` protocol** — P2, M.
   Define a `Corruptor` protocol and add a length/sign-preserving strategy (bound the operand
   delta so digit-count and sign are invariant) to close the `DESIGN.md` §7 confound that
   ~50–60% of corruptions change digit-count and ~13% change sign. *(Note: MCQ is already covered —
@@ -177,7 +195,7 @@ critiques flagged as must-dos.
   and length/sign-preserving corruptors satisfy the protocol; no probe is dropped on any current
   domain.
   *(Depends on: directed-CSC upgrade.)*
-- [ ] **Tighten orthogonality assertions and add a seed-sweep stability test** — P1, M. Tighten
+- [x] **Tighten orthogonality assertions and add a seed-sweep stability test** — P1, M. Tighten
   the off-axis tests toward the documented exact 0.50 (per the tie convention) and label it a
   *structural* artifact (the probe returns identical zeros off its axis), not measured
   non-leakage; add a ≥5-seed sweep asserting headline metrics are stable. Land before any new
@@ -200,7 +218,7 @@ Breadth is only worth adding *after* the by-construction problem is confronted �
 here is validated on the noisy substrate and held out of the frozen pool, making the additions
 honest rather than four more guaranteed-1.0 bullet points.
 
-- [ ] **Add a Filler-Token probe (FIL) with a compute-not-content synthetic dial** — P2, M.
+- [x] **Add a Filler-Token probe (FIL) with a compute-not-content synthetic dial** — P2, M.
   Replace the CoT with length-matched filler tokens and force an answer (Lanham filler-token /
   Pfau hidden-computation); add a `p_filler` dial whose answer is correct iff ≥N
   filler-equivalent tokens are present regardless of content; wire FIL into `PROBE_ORDER`/`AXIS_MODEL`.
@@ -208,7 +226,7 @@ honest rather than four more guaranteed-1.0 bullet points.
   AUROC under the noise regime, ~0.5 off-axis, and that adding `p_filler` to the extended set leaves
   committed pooled numbers unchanged; numpy-only, no key.
   *(Depends on: noise injection, frozen-population contract.)*
-- [ ] **Add a Paraphrase-Invariance probe (PAR) with a steganographic synthetic dial** — P2, M.
+- [x] **Add a Paraphrase-Invariance probe (PAR) with a steganographic synthetic dial** — P2, M.
   Deterministically reword the CoT prefix while preserving stated numeric results, then re-derive
   (Lanham paraphrasing); add a `p_stego` dial whose answer depends on a surface artifact (token
   parity / acrostic) so paraphrase flips it; wire into `PROBE_ORDER`/`AXIS_MODEL`.
@@ -216,7 +234,7 @@ honest rather than four more guaranteed-1.0 bullet points.
   off-axis, that a content-preserving rewrite leaves a faithful model's answer unchanged on every
   instance, and that committed pooled numbers are unchanged; numpy-only, deterministic.
   *(Depends on: noise injection, frozen-population contract.)*
-- [ ] **Add an Implicit Post-Hoc Rationalization probe (IPR) via contradictory question
+- [x] **Add an Implicit Post-Hoc Rationalization probe (IPR) via contradictory question
   pairs** — P2, M. Programmatically generate logically contradictory yes/no pairs ("Is X>Y?" /
   "Is Y>X?") in pure numpy with exact logical ground truth (Yes/Yes or No/No is provably
   rationalizing); add a paired-question generator to `problems.py` and an extended dial producing
@@ -243,7 +261,7 @@ synthetic dials a "reproduction" of Baker/Emmons overclaims — so we keep the o
 adversarial axis (monitor fixed first to avoid circularity), cut the redundant evasion dials,
 and adopt strict "analogue" language.
 
-- [ ] **Reposition README/DESIGN intro around monitorability with honest literature framing** —
+- [x] **Reposition README/DESIGN intro around monitorability with honest literature framing** —
   P1, S. Docs-only. Open with the multi-lab monitorability agenda, present the probes as monitor
   components, adopt the monitorability = faithfulness × coverage(verbosity) decomposition (note SIM
   covers coverage), add a behavioral-vs-white-box scope paragraph, and cite the FaithCoT-Bench
@@ -251,7 +269,7 @@ and adopt strict "analogue" language.
   *Acceptance:* README/DESIGN include the monitorability framing, the faithfulness×coverage
   decomposition, and the FaithCoT-Bench / behavioral-vs-white-box comparison with citations; no code
   changes, suite unaffected.
-- [ ] **Report monitor-grade metrics: safety-at-1%-FPR, catch-rate, subtle-vs-blatant split** —
+- [x] **Report monitor-grade metrics: safety-at-1%-FPR, catch-rate, subtle-vs-blatant split** —
   P1, M. Compute catch-rate / safety at a low FPR calibrated on the known-faithful population (1%
   FPR à la CoT Red-Handed / Apollo) plus a subtle-vs-blatant split using the noise regime's
   intermediate-dial instances as "subtle"; all pure-numpy via the existing `roc_curve`.
@@ -259,7 +277,7 @@ and adopt strict "analogue" language.
   negatives and that subtle cases yield a lower catch-rate than blatant; the numbers appear in
   `results.json` and the report; numpy-only.
   *(Depends on: noise injection.)*
-- [ ] **Wire calibration (ECE + reliability diagram) into the pipeline** — P2, M. `metrics.expected
+- [x] **Wire calibration (ECE + reliability diagram) into the pipeline** — P2, M. `metrics.expected
   _calibration_error` is implemented and tested but called nowhere; wire it into the report as a
   per-probe and combined-monitor reliability curve + ECE KPI, driven by the noise-regime scores
   (synthetic dials are near-0/1 clustered, so the diagram is only informative on the noisy/real
@@ -269,7 +287,7 @@ and adopt strict "analogue" language.
   and each probe; a test asserts the ECE matches a hand-computed fixture and the SVG is well-formed;
   numpy-only.
   *(Depends on: noise injection.)*
-- [ ] **Add an obfuscated-reward-hacking axis (OBF) as an offline analogue, monitor fixed
+- [x] **Add an obfuscated-reward-hacking axis (OBF) as an offline analogue, monitor fixed
   first** — P2, L. Add a `p_obfuscate` dial that pursues a hacked target while adversarially
   scrubbing the CoT. *Critical ordering:* fix the monitor first (combined detector at the τ from
   the safety-at-1%-FPR task) and make the obfuscation a *generic* surface-scrub, not bespoke to
@@ -280,7 +298,7 @@ and adopt strict "analogue" language.
   fixed monitor's catch-rate falls below a documented threshold; an obfuscation curve is emitted;
   docs use "analogue" not "reproduction"; deterministic, numpy-only, no key.
   *(Depends on: monitor-grade metrics, frozen-population contract.)*
-- [ ] **Split SHI into a hint-type taxonomy with per-type dials and per-type AUROC** — P3, L.
+- [x] **Split SHI into a hint-type taxonomy with per-type dials and per-type AUROC** — P3, L.
   Replace the single generic cue with a cue-family covering the Anthropic-2025 / Turpin types
   expressible in a text-only world — sycophancy, consistency (prefilled prior answer), metadata
   (answer in XML), authority framing, conflicting/multi-hint (drop visual-pattern: no text analog).
@@ -290,7 +308,7 @@ and adopt strict "analogue" language.
   dial and ~0.5 against the others, the card exposes a per-hint-type breakdown, and the new
   sub-models are extended-only so committed pooled numbers are unchanged; numpy-only, deterministic.
   *(Depends on: frozen-population contract.)*
-- [ ] **Add a right-answer-via-illegitimate-channel sub-signal to SHI (reward-hack
+- [x] **Add a right-answer-via-illegitimate-channel sub-signal to SHI (reward-hack
   shortcut)** — P3, M. *Resolves a verified contradiction:* SHI's flip detection requires
   `tr.answer == cue.target ∧ tr.answer != a0` (`shi.py` line 39), so a reward-hack shortcut
   pointing at the *correct* answer never fires the existing check. Add a *separate* shortcut
@@ -320,7 +338,7 @@ plus spend and gates ~4 downstream tasks. Pulling the keyed recording forward as
 do-it-now step de-risks the whole roadmap; everything downstream then runs offline from the
 committed cache.
 
-- [ ] **Surface and document the real-model API, narrow the import guard, add the free-text-CoT
+- [x] **Surface and document the real-model API, narrow the import guard, add the free-text-CoT
   caveat** — P1, S. Re-export `AnthropicModel` / `LLMSimulator` / `LLMJudgeCueDetector` from the
   package top-level (guarded so `anthropic` stays optional); replace the verified bare
   `except Exception` in `__init__.py` with targeted `ImportError`/`ModuleNotFoundError` handling;
@@ -329,7 +347,7 @@ committed cache.
   *Acceptance:* importing the real-model classes works when `anthropic` is installed and degrades to
   a clear `ImportError` (not silent metrics-only) when not; a test asserts the narrowed handling and
   that the free-text-CoT / judge-swap caveat is present in README/DESIGN/docstrings.
-- [ ] **Verify Anthropic SDK request shapes against the `claude-api` skill before any
+- [x] **Verify Anthropic SDK request shapes against the `claude-api` skill before any
   recording** — P1, S. The cache key is a sha256 of the request spec, so a wrong shape means
   re-billing to re-record. Consult the `claude-api` skill to confirm the adaptive-thinking shape,
   the effort/thinking-budget mapping, and what `thinking.display='summarized'` returns for
@@ -339,7 +357,7 @@ committed cache.
   *Acceptance:* a documented note records the verified SDK request shapes per the skill; a
   fake-transport dry run of the score path passes asserting spec construction; no key spent yet.
   *(Depends on: API-surface task.)*
-- [ ] **Harden the Anthropic transport: retry/backoff, token/cost accounting, truncation
+- [x] **Harden the Anthropic transport: retry/backoff, token/cost accounting, truncation
   guard** — P1, M. `_api_call` has no retries and a fixed `max_tokens=8000` (verified) that can
   silently truncate adaptive-thinking traces; add bounded retry/backoff, a truncation flag, and
   per-call token/cost recording, all behind the injectable transport seam; harden trace/cache JSON
@@ -348,7 +366,7 @@ committed cache.
   on truncated output, recorded per-call token/cost, and safe escaping of embedded `</script>` and
   U+2028/U+2029; the core suite still runs with no `anthropic` SDK and no key.
   *(Depends on: SDK-shape verification.)*
-- [ ] **Disambiguate malformed CoT from unfaithful CoT in SIM on the real path** — P1, S.
+- [x] **Disambiguate malformed CoT from unfaithful CoT in SIM on the real path** — P1, S.
   `ExactArithmeticSimulator.predict` returns `'?'` on an unparseable final step (verified), scoring
   as a guaranteed miss; on real models a parse-failed CoT is distinct from a non-predictive one.
   Track a parse-failure rate in `extra` and exclude/flag those instances. Must land before any real
@@ -357,7 +375,7 @@ committed cache.
   separately from genuine simulatability misses; synthetic SIM AUROC is unchanged because synthetic
   chains always parse.
   *(Depends on: API-surface task.)*
-- [ ] **Record and commit a real-Claude replay cache and add an end-to-end score test** — P1, L.
+- [x] **Record and commit a real-Claude replay cache and add an end-to-end score test** — P1, L.
   Do the one-time keyed recording of `claude-sonnet-4-6` and `claude-opus-4-8` on a small set
   (n=15–20), commit the small replay cache, and add an e2e test running `score` offline from the
   cache with no key; report real-model behavior as *descriptive* statistics (flip-rate, ack-rate,
@@ -367,7 +385,7 @@ committed cache.
   Faithfulness Card whose structure a test asserts and whose request specs match the recorded specs;
   real-model numbers are descriptive with the no-ground-truth caveat; the core suite stays key-free.
   *(Depends on: transport hardening, SIM parse-failure fix.)*
-- [ ] **Make `score` produce the portfolio-grade HTML report (model-agnostic renderer)** — P2, L.
+- [x] **Make `score` produce the portfolio-grade HTML report (model-agnostic renderer)** — P2, L.
   Real-model scoring currently dead-ends at stdout + optional card JSON; generalize `render_report`
   (or add a card-report renderer) so a real Claude run produces the same shareable page as the
   synthetic validation. (The `</script>` / U+2028 hardening lands earlier, so embedded real CoT is
@@ -376,7 +394,7 @@ committed cache.
   the real-model cards; a test asserts the renderer handles a cards-only report and that embedded
   CoT containing `</script>` does not break the page.
   *(Depends on: replay cache + e2e test.)*
-- [ ] **Add a thinking-vs-answer acknowledgment-divergence diagnostic** — P3, S. Exploit the
+- [x] **Add a thinking-vs-answer acknowledgment-divergence diagnostic** — P3, S. Exploit the
   adapter's separate thinking and answer channels to measure the gap between hint acknowledgment in
   reasoning tokens vs final answer text (the "Lie to Me" 2026 finding). *Honesty gate:* opus-4.x
   emits only `summarized` thinking, which is not raw reasoning — confirm what `summarized` returns
@@ -403,7 +421,7 @@ to the noisy and real substrates (where the numbers actually vary) makes the har
 than its prior art without overclaiming. The judge-vs-gold kappa rig is the only thing that tells
 you whether the real-path LLM judges are trustworthy.
 
-- [ ] **Add DeLong + paired permutation tests for AUROC differences, applied only to varying
+- [x] **Add DeLong + paired permutation tests for AUROC differences, applied only to varying
   substrates** — P2, M. Add `metrics.delong_test(scores_a, scores_b, labels)` returning the AUC
   gap, a DeLong z/p (reusing the existing rank/placement machinery), and a within-instance
   permutation p (Bandos 2005, more powerful in the small-n near-1.0 regime), each with a paired
@@ -414,7 +432,7 @@ you whether the real-path LLM judges are trustworthy.
   permutation p; the report shows a p-value and difference-CI only on the noisy/real substrate;
   `DESIGN.md` states why the zero-noise gap is not tested; numpy-only.
   *(Depends on: noise injection.)*
-- [ ] **Replace the flat bootstrap with a cluster (hierarchical) bootstrap and add per-domain
+- [x] **Replace the flat bootstrap with a cluster (hierarchical) bootstrap and add per-domain
   detection AUROC** — P2, M. Add `bootstrap_cluster_ci(..., cluster_ids)` resampling whole clusters
   (problem-level, optionally model-level) using the `problem_ids` already in `ProbeResult` (the flat
   bootstrap is anti-conservative because instances are nested: shared problems across models, 5
@@ -425,7 +443,7 @@ you whether the real-path LLM judges are trustworthy.
   reduces to the flat result when every instance is its own cluster; cards/validation use clustered
   CIs; the report includes a per-domain detection-AUROC breakdown; numpy-only, deterministic.
   *(Depends on: ProbeResult/registry guard.)*
-- [ ] **Add chance-corrected inter-probe agreement (kappa) plus multiple-comparison control** —
+- [x] **Add chance-corrected inter-probe agreement (kappa) plus multiple-comparison control** —
   P2, M. Augment the cross-probe correlation with chance-corrected *agreement* (Cohen's kappa /
   Krippendorff's alpha on thresholded per-instance flags, since the disagreement claim is about a
   binary "flagged unfaithful?" decision), each with a cluster-bootstrap CI; apply Holm–Bonferroni to
@@ -437,7 +455,7 @@ you whether the real-path LLM judges are trustworthy.
   annotates post-correction significance of specificity cells and rank pairs; README no longer leads
   with the raw 0.25; numpy-only.
   *(Depends on: cluster bootstrap.)*
-- [ ] **Calibrate the LLM judges against synthetic gold (Cohen's kappa, self-consistency,
+- [x] **Calibrate the LLM judges against synthetic gold (Cohen's kappa, self-consistency,
   bias)** — P2, M. On the synthetic world, cue-acknowledgment and simulator answers have exact gold
   labels; add a judge-audit running `LLMJudgeCueDetector` / `LLMSimulator` over a labeled synthetic
   (and cached real) sample reporting Cohen's kappa vs gold (Landis–Koch bands + a human-human
@@ -465,13 +483,13 @@ test-count badge (**57** actual vs **55** stated, verified). The `--check` mode 
 high-value as a safety net for every numerics-changing task; the 3.14 row is on-narrative (the
 numpy-only story is "wheels were scarce on 3.14").
 
-- [ ] **Fix the stale test count and add a badge-drift CI guard** — P0, S. pytest collects and
+- [x] **Fix the stale test count and add a badge-drift CI guard** — P0, S. pytest collects and
   passes **57** tests but the README shields badge, two README prose mentions, and `CLAUDE.md` all
   say **55**; update all occurrences to the live collected count and add a CI step that fails if the
   badge drifts from the live collection count.
   *Acceptance:* README and `CLAUDE.md` state the actual collected test count, and a CI step fails on
   any drift between the badge number and the live pytest collection count.
-- [ ] **Add a `validate --check` mode and single-source the version (no false-premise
+- [x] **Add a `validate --check` mode and single-source the version (no false-premise
   framing)** — P0, S. Add `validate --check` that recomputes the validation and diffs against the
   committed `results.json` *without* overwriting it; single-source the version via
   `importlib.metadata`; de-duplicate so `experiments/validate_synthetic.py` delegates to the shared
@@ -482,7 +500,7 @@ numpy-only story is "wheels were scarce on 3.14").
   overwriting the artifact and zero when they match; CLI and experiment driver call one shared
   function; version reads from `importlib.metadata`; the exact-vs-tolerance field policy is
   documented; no default-`n` change and no false-premise claim in docs/changelog.
-- [ ] **Add a CI regression gate diffing fresh results against the committed artifact** — P0, M.
+- [x] **Add a CI regression gate diffing fresh results against the committed artifact** — P0, M.
   CI's validate step writes to `/tmp` and only checks exit code 0, so a silent numerical regression
   in the headline would pass; add a step that runs `validate` with the artifact's exact params and
   asserts the documented key numbers (targeted AUROC, combined-vs-best-single, specificity diagonal)
@@ -492,7 +510,7 @@ numpy-only story is "wheels were scarce on 3.14").
   tolerance; a deliberate perturbation in a test branch trips the gate; the gate is stable across the
   Python/OS matrix; the core suite still runs no-key/no-network.
   *(Depends on: `validate --check` mode.)*
-- [ ] **Add a committed-artifact regeneration check covering report HTML and SVGs** — P1, S.
+- [x] **Add a committed-artifact regeneration check covering report HTML and SVGs** — P1, S.
   `CLAUDE.md` says "regenerate committed artifacts after any change that affects numbers" but nothing
   enforces it; extend the check tooling so `report/faithfulness_report.html` and `docs/assets/*.svg`
   are verified consistent with `results.json` (regenerate-and-diff or a content hash), not just the
@@ -500,7 +518,7 @@ numpy-only story is "wheels were scarce on 3.14").
   *Acceptance:* a CI/check step fails if the HTML report or SVGs are stale relative to the committed
   `results.json`; regenerating from `results.json` makes the check pass; numpy-only.
   *(Depends on: CI regression gate.)*
-- [ ] **Add ruff lint/format and a Python 3.14 + macOS CI matrix (defer mypy)** — P2, M. Add a ruff
+- [x] **Add ruff lint/format and a Python 3.14 + macOS CI matrix (defer mypy)** — P2, M. Add a ruff
   (lint+format) gate and a coverage number; add Python 3.14 (the numpy-only narrative is that
   3.14-wheel scarcity motivated it, yet CI tops out at 3.13) and macOS to the matrix; delete the
   verified-dead `first_operand_left` in `problems.py`. *Defer mypy* (near-zero annotations; a
@@ -508,7 +526,7 @@ numpy-only story is "wheels were scarce on 3.14").
   *Acceptance:* CI runs `ruff check` and reports a coverage number, both green; the matrix includes
   Python 3.14 and macOS and the suite passes on both; `first_operand_left` is removed; no new runtime
   dependency (tooling in the dev extra); mypy is explicitly deferred with a tracking note.
-- [ ] **Add chart accessibility, legends, and label-overflow handling to `viz/svg`** — P2, M. The
+- [x] **Add chart accessibility, legends, and label-overflow handling to `viz/svg`** — P2, M. The
   SVGs lack `<title>`/`<desc>`/aria, color-scale legends, and label-overflow handling; add them and
   expose `correlation_color` via `viz` `__all__`.
   *Acceptance:* generated SVGs include `<title>`/`<desc>`/aria attributes and a visible legend for
@@ -530,7 +548,7 @@ numbers. A full third synthetic domain is effectively a second project — the p
 machinery are deeply coupled to the `L op R = V` chain — so it is deferred to a scoping spike
 rather than shipped half-wired.
 
-- [ ] **Add a numpy-only GSM8K loader with a bundled cached subset** — P2, M. Wire a tiny GSM8K
+- [x] **Add a numpy-only GSM8K loader with a bundled cached subset** — P2, M. Wire a tiny GSM8K
   loader (final answer = single split on `####`, no extra deps; <https://huggingface.co/datasets/openai/gsm8k>)
   into the real-model path so CSC and EAR run on real grade-school math chains; bundle a small cached
   subset (50–200 items) and their recorded traces so the offline cache reproduces real-model numbers
@@ -539,7 +557,7 @@ rather than shipped half-wired.
   via `####`, and that running CSC/EAR over the cached GSM8K traces produces a card offline with no
   key; no new runtime dependency beyond numpy.
   *(Depends on: replay cache + e2e test.)*
-- [ ] **Position the project against FaithCoT-Bench / RFEval with comparable metrics** — P2, S.
+- [x] **Position the project against FaithCoT-Bench / RFEval with comparable metrics** — P2, S.
   Add a "Related benchmarks" section to README/DESIGN contrasting synthetic-ground-truth-by-construction
   with FaithCoT-Bench (expert annotation, F1/kappa) and RFEval (behavioral counterfactual
   consistency); report F1 and Cohen's kappa alongside AUROC; cite FaithCoT-Bench's finding that
@@ -550,7 +568,7 @@ rather than shipped half-wired.
   AUROC for the headline result; the math-vs-knowledge scope caveat is stated; no new runtime deps;
   suite unaffected.
   *(Depends on: judge-vs-gold calibration.)*
-- [ ] **Spike: scope a third structurally-different synthetic domain (research, not build)** — P3,
+- [x] **Spike: scope a third structurally-different synthetic domain (research, not build)** — P3,
   S. Produce a written design enumerating which protocols must be extracted (the probes, simulator,
   cue machinery, and `value_to_answer`/`_parse_answer` all assume `L op R = V`, so a genuinely
   different domain like symbolic logic needs domain-specific parse/execute/corrupt/simulator

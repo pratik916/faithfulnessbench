@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cross-domain transfer — GSM8K</title><style>
+:root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#fff; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink);
+       background:var(--bg); line-height:1.55; }
+.wrap { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+header h1 { font-size:30px; margin:0 0 6px; letter-spacing:-0.02em; }
+header .tag { color:var(--muted); font-size:15px; max-width:680px; }
+header .meta { color:var(--muted); font-size:12px; margin-top:10px; font-variant-numeric:tabular-nums; }
+section { background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:24px 26px; margin-top:22px; }
+section h2 { font-size:19px; margin:0 0 4px; letter-spacing:-0.01em; }
+section h2 .n { color:var(--muted); font-weight:600; margin-right:8px; }
+section p.lead { color:var(--muted); margin:0 0 18px; font-size:14px; }
+.chartrow { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+.chartrow > div { flex:1 1 320px; }
+svg { max-width:100%; height:auto; }
+.kpis { display:flex; gap:16px; flex-wrap:wrap; margin:4px 0 18px; }
+.kpi { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 16px; min-width:150px; }
+.kpi .v { font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; }
+.kpi .l { font-size:12px; color:var(--muted); }
+.finding { border-left:4px solid #4f46e5; background:#eef2ff; padding:12px 16px; border-radius:0 8px 8px 0;
+           font-size:14px; margin-top:14px; }
+table { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+th,td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); }
+th { color:var(--muted); font-weight:600; }
+code { background:#0f172a; color:#e2e8f0; padding:2px 6px; border-radius:5px; font-size:12.5px; }
+.viewer select { font-size:14px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; width:100%; }
+.cols { display:flex; gap:16px; flex-wrap:wrap; margin-top:16px; }
+.col { flex:1 1 300px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.col .head { padding:10px 14px; font-weight:600; font-size:13px; display:flex; justify-content:space-between; align-items:center; }
+.col.base .head { background:#ecfdf5; } .col.cued .head { background:#fef2f2; }
+.col .ans { font-weight:700; font-variant-numeric:tabular-nums; }
+.col pre { margin:0; padding:12px 14px; font-size:12.5px; white-space:pre-wrap; word-break:break-word;
+           font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#fff; border-top:1px solid var(--line); }
+.verdict { margin-top:16px; padding:12px 16px; border-radius:8px; font-size:14px; font-weight:600; }
+.verdict.bad { background:#fef2f2; color:#b91c1c; } .verdict.ok { background:#ecfdf5; color:#047857; }
+footer { color:var(--muted); font-size:12.5px; margin-top:28px; }
+footer code { background:#e2e8f0; color:#0f172a; }
+</style></head><body><div class='wrap'><h1>Cross-domain transfer — GSM8K</h1><p class='lead'>Per-probe faithfulness (1 = faithful). The synthetic-arithmetic column has exact ground-truth labels; the GSM8K column is <strong>descriptive</strong> (real grade-school math has no faithfulness gold), so there is no AUROC-vs-truth there.</p><table><tr><th>Probe</th><th>Synthetic arithmetic<br>(ground truth)</th><th>GSM8K real-math<br>(descriptive)</th></tr><tr><td>SHI</td><td>1.000</td><td>1.000</td></tr><tr><td>CSC</td><td>1.000</td><td>— (degraded)</td></tr><tr><td>SIM</td><td>1.000</td><td>0.000</td></tr><tr><td>EAR</td><td>0.917</td><td>0.994</td></tr></table><p>Descriptive cross-domain comparison. The synthetic-arithmetic side has exact ground-truth labels (probe AUROC is validated there); the GSM8K side has NO faithfulness ground truth, so only descriptive statistics are reported — never an AUROC-vs-truth. The identical probe code runs unchanged on real grade-school math; CSC/SIM degrade on free-text CoT (no parseable &#x27;L op R = V&#x27; chain), the documented real-path limitation, while SHI/EAR run.</p><p><em>FaithCoT-Bench (arXiv:2510.04040) finds counterfactual faithfulness methods succeed on math but fail to transfer to knowledge domains. This GSM8K evidence is in-domain (arithmetic) and descriptive — it shows the probes RUN unchanged on real grade-school math, not that faithfulness *validity* transfers across domains.</em></p></div></body></html>

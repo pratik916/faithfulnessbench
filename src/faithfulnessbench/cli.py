@@ -50,23 +50,40 @@ def _cmd_report(args: argparse.Namespace) -> int:
 
 
 def _cmd_score(args: argparse.Namespace) -> int:
-    from .card import build_card
-    from .models.anthropic_model import AnthropicModel
+    from .models.anthropic_model import AnthropicModel, score_real_model
     from .problems import mixed_problems
 
     model = AnthropicModel(args.model, effort=args.effort, cache_path=args.cache)
     problems = mixed_problems(args.n, seed=args.seed)
     try:
-        card = build_card(model, problems, n_trials=args.trials)
+        # The real-model path grades SHI/SIM with an LLM judge/simulator and uses the
+        # length/sign-preserving corruptor (the synthetic exact detectors do not apply to
+        # free-text CoT); --exact-detectors forces the synthetic ones for comparison.
+        card, jr = score_real_model(
+            model=model, problems=problems, n_trials=args.trials,
+            exact=args.exact_detectors, cache_path=args.cache,
+        )
     except RuntimeError as exc:  # missing SDK / key
         print(f"error: {exc}", file=sys.stderr)
         print('hint: pip install "faithfulnessbench[anthropic]" and set ANTHROPIC_API_KEY', file=sys.stderr)
         return 2
 
     print(f"Faithfulness Card — {card.model_name}")
+    if getattr(model, "truncated_calls", 0):
+        print(
+            f"  WARNING: {model.truncated_calls} API call(s) hit max_tokens — their CoT may be "
+            "cut mid-derivation; affected instances are flagged (meta.truncated).",
+            file=sys.stderr,
+        )
     print(f"  composite faithfulness: {card.composite_faithfulness:.3f}")
     for name, d in card.probe_scores.items():
         print(f"  {name}: faithfulness {d['faithfulness']:.3f}  (CI {d['ci_lo']:.3f}-{d['ci_hi']:.3f})")
+    if jr is not None:
+        print(
+            f"  judge reliability (LLM cue-judge vs exact gold): kappa={jr['kappa_vs_gold']:.3f} "
+            f"({jr['landis_koch']}; self-consistency {jr['self_consistency']:.2f}) "
+            f"— real SHI/SIM numbers are only as good as this judge"
+        )
 
     from .models.anthropic_model import thinking_vs_answer_acknowledgment
 
@@ -77,18 +94,44 @@ def _cmd_score(args: argparse.Namespace) -> int:
             f"  cue acknowledgment — thinking {div['thinking_ack_rate']:.2f} vs answer "
             f"{div['answer_ack_rate']:.2f} (divergence {div['divergence']:+.2f}; {note})"
         )
+
+    card_dict = card.to_dict()
+    if jr is not None:
+        card_dict["judge_reliability"] = jr
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.out).write_text(json.dumps(card.to_dict(), indent=2))
+        Path(args.out).write_text(json.dumps(card_dict, indent=2))
         print(f"Wrote card -> {args.out}")
     if args.html:
         from .report import write_card_report
 
         write_card_report(
-            card.to_dict(), args.html,
+            card_dict, args.html,
             title=f"Faithfulness Card — {card.model_name}",
-            subtitle="Scored via the Anthropic adapter (descriptive; replayed from cache).",
+            subtitle="Scored via the Anthropic adapter with LLM judge/simulator "
+                     "(descriptive; replayed from cache).",
         )
+        print(f"Wrote report -> {args.html}")
+    return 0
+
+
+def _cmd_transfer(args: argparse.Namespace) -> int:
+    from .transfer import build_gsm8k_transfer, transfer_text_table, write_transfer_html
+
+    transfer = build_gsm8k_transfer(
+        cache_path=args.cache, gsm8k_sample=args.sample,
+        model=args.model, effort=args.effort, n_trials=args.trials,
+    )
+    print("Cross-domain transfer — does the validated battery run on real grade-school math?")
+    print(transfer_text_table(transfer))
+    print(f"\n{transfer['note']}")
+    print(f"\n{transfer['faithcot_scope']}")
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(json.dumps(transfer, indent=2))
+        print(f"\nWrote transfer JSON -> {args.out}")
+    if args.html:
+        write_transfer_html(transfer, args.html)
         print(f"Wrote report -> {args.html}")
     return 0
 
@@ -128,7 +171,26 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--cache", default=".fb_cache/score.json", help="record/replay cache path")
     s.add_argument("--out", default=None, help="optional path to write the card JSON")
     s.add_argument("--html", default=None, help="optional path to write a shareable HTML card report")
+    s.add_argument(
+        "--exact-detectors", action="store_true",
+        help="use the synthetic exact detectors instead of the LLM judge/simulator "
+             "(for adapter debugging / comparison; not the honest real-model default)",
+    )
     s.set_defaults(func=_cmd_score)
+
+    t = sub.add_parser(
+        "transfer",
+        help="descriptive cross-domain comparison: core probes on synthetic arithmetic vs "
+             "cached GSM8K real-math (offline, no key)",
+    )
+    t.add_argument("--cache", default="experiments/replay_cache/fake_gsm8k.json")
+    t.add_argument("--sample", default="experiments/datasets/gsm8k_sample.jsonl")
+    t.add_argument("--model", default="claude-sonnet-4-6")
+    t.add_argument("--effort", default="medium", choices=["low", "medium", "high", "max"])
+    t.add_argument("--trials", type=int, default=2)
+    t.add_argument("--out", default=None, help="optional path to write the transfer JSON")
+    t.add_argument("--html", default=None, help="optional path to write a standalone HTML page")
+    t.set_defaults(func=_cmd_transfer)
 
     args = parser.parse_args(argv)
     return args.func(args)

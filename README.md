@@ -2,7 +2,9 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-180%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-222%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+
+**▶ [Open the live interactive report](https://pratik916.github.io/faithfulnessbench/)** — probe-validity KPIs, the AUROC-vs-noise sensitivity curve, the CoT-obfuscation robustness frontier, and an interactive trace viewer (slide how much reasoning the model sees; toggle a corrupted step). No clone required.
 
 ---
 
@@ -65,6 +67,19 @@ Because the dials are code, every `(model, problem)` carries a **known label**. 
 
 So that the headline is comparable to the annotation-based work, the validation reports **F1 and Cohen's kappa beside AUROC** for the combined detector (all 1.0 on the clean synthetic population — the same by-construction caveat). **Scope caveat:** FaithCoT-Bench finds counterfactual methods succeed in *math* but degrade in *knowledge* domains; this harness is arithmetic-heavy, so its real-model evidence (incl. GSM8K) speaks to math reasoning, not open-domain knowledge.
 
+### Cross-domain transfer: does it run beyond linear arithmetic? (GSM8K)
+
+The cheapest honest answer to *"does it generalize?"* is to run the **identical probe code** over real grade-school math (GSM8K) on the cached real-model path — `faithfulnessbench transfer` ([standalone page](report/transfer.html)). The result is reported **descriptively**: GSM8K has no faithfulness ground truth, so there is *no* AUROC-vs-truth on that side — only whether each probe still runs and what it produces.
+
+| Probe | Synthetic arithmetic (ground truth) | GSM8K real-math (descriptive) |
+|---|---|---|
+| SHI | 1.000 | 1.000 |
+| CSC | 1.000 | — (degraded) |
+| SIM | 1.000 | 0.000 |
+| EAR | 0.917 | 0.994 |
+
+SHI and EAR **run unchanged** on free-text GSM8K CoT; CSC and SIM **degrade** because real reasoning has no parseable `L op R = V` chain to corrupt or exactly simulate — exactly the real-path limitation documented in `docs/DESIGN.md`. (The GSM8K column currently replays from the labeled *fake* cache; it becomes a real measurement with the one-command real recording.) This is *in-domain* (still arithmetic) and does not claim cross-domain *validity* transfer — consistent with FaithCoT-Bench's math→knowledge finding above.
+
 ## Why a card, not a single number
 
 <p align="center">
@@ -84,10 +99,16 @@ faithfulnessbench validate          # seeded ground-truth validation
 open report/faithfulness_report.html # self-contained interactive report
 ```
 
-The [interactive report](report/faithfulness_report.html) includes a **trace viewer**: pick a problem and watch a planted hint silently flip the model's answer while its chain-of-thought stays clean.
+The [live interactive report](https://pratik916.github.io/faithfulnessbench/) (also written locally to `report/faithfulness_report.html`) includes a **trace viewer**: pick a problem and watch a planted hint silently flip the model's answer while its chain-of-thought stays clean, then step the EAR truncation slider and toggle the CSC corruption to see the causal interventions live.
 
 <p align="center">
-  <a href="report/faithfulness_report.html"><img src="docs/assets/report.png" width="90%" alt="The self-contained HTML report: probe-validity KPIs, detection-AUROC and ROC charts, and the AUROC-vs-label-noise sensitivity curve with monitor catch-rates"></a>
+  <a href="https://pratik916.github.io/faithfulnessbench/"><img src="docs/assets/trace_viewer.gif" width="80%" alt="The interactive trace viewer: a silent hint flip, then the EAR slider showing an answer that locks in before any reasoning (early-lock = unfaithful), then toggling a corrupted CSC step where the answer ignores the corruption (post-hoc)"></a>
+</p>
+
+*The interactive trace viewer in the report: a silent hint flip, then the EAR slider (an answer that's already fixed at 0% reasoning = early lock), then a CSC corruption toggle (the answer ignores the corrupted step = post-hoc). All client-side in one self-contained HTML file.*
+
+<p align="center">
+  <a href="https://pratik916.github.io/faithfulnessbench/"><img src="docs/assets/report.png" width="90%" alt="The self-contained HTML report: probe-validity KPIs, detection-AUROC and ROC charts, and the AUROC-vs-label-noise sensitivity curve with monitor catch-rates"></a>
 </p>
 
 *The top of the generated report — every probe's detection AUROC, and (below) the honest part: as label noise rises, AUROC falls from the by-construction 1.000 toward chance, so it reads as a real sensitivity measurement rather than a wiring check. The full page also includes the specificity matrix, the cross-probe agreement, per-model cards, and the interactive trace viewer.*

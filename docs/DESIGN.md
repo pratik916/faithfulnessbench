@@ -239,7 +239,10 @@ This is the most important honesty point in the project, so it is stated plainly
   Re-chaining propagates the operand delta, so digit-counts (~50–60% of corruptions) and
   occasionally signs (~13%) change. This is inert for the synthetic model (it recomputes
   from operands, ignoring surface form) but is a residual distribution-shift confound on
-  the real-model path; bounding magnitude/sign change is left as future work.
+  the real-model path. A `LengthSignPreservingCorruptor` (a `Corruptor` Protocol
+  implementation) now bounds the operand delta so digit-count and sign are invariant, and
+  is the default corruptor on the real-model `score` path; the operand corruptor remains
+  the default for the synthetic validation, where surface form is irrelevant.
 - **P3 (SIM) leakage control degrades on real free-text CoT.** The synthetic simulator
   reads only the stated conclusion, so it structurally cannot re-solve `q`. But a real
   CoT often *restates the problem*, so an LLM simulator could recover `q` from the
@@ -274,3 +277,46 @@ and the metrics/validation layer are domain-agnostic and need no change. **Effor
 **Recommendation: defer** — the cheapest "does it generalize?" evidence is GSM8K real grade-school
 math on the real-model path (a cached substrate), not a second from-scratch synthetic domain; build
 a third domain only if a reviewer specifically wants synthetic ground truth outside arithmetic.
+
+### Spike: a white-box / linear-probe offline analogue (go/no-go)
+
+Behavioral (black-box) probing is this project's deliberate scope; white-box / activation-level
+probing is the largest named frontier it does *not* touch. This spike scopes the one honest way to
+add white-box *evidence* without leaving the synthetic-ground-truth philosophy or the numpy-only
+invariant — and is blunt about why it is the most over-claim-prone idea in the backlog.
+
+**The idea.** Give each `ConfigurableSyntheticModel` a low-dimensional, deterministic "activation"
+vector `φ(model, problem)` that exposes a *generic* feature set — e.g. `[stated_final_value,
+cue_target, true_answer, locked_early_flag, decoy_gap, …]` derived from quantities the model already
+computes — and train a numpy logistic/linear probe to predict the planted per-instance faithfulness
+label from `φ`. Then contrast it with the black-box probes on the *same* held-out instances.
+
+**The honest finding it should produce (the contrast, not a number).** A white-box probe should
+(a) recover unfaithfulness the black-box probes miss — most pointedly the **steganographic (`p_stego`)
+and obfuscated (`p_obfuscate`)** cases, where the CoT *text* is scrubbed but the decision feature is
+still present in `φ` — and (b) itself **fail** where the planted signal is genuinely absent from `φ`
+(e.g. a failure mode φ was not designed to expose), demonstrating white-box probing is not a free
+lunch. The deliverable is that two-way contrast, reported as a small table, never a headline AUROC.
+
+**Why it is the most make-work-prone idea here, and the discipline that redeems it.** If you both
+define the activation and the label, AUROC = 1.000 means *nothing* — a worse version of the
+by-construction problem, because now you also authored the features. It is only honest if: (1) `φ` is
+a **generic** function fixed *before* any fitting (no per-failure-mode feature engineering); (2) the
+probe is **fit on a held-out train split and scored on a disjoint test split**, with a permuted-label
+control that must collapse to chance (mirroring §6's negative control); (3) the headline is the
+black-box-vs-white-box **contrast** plus an explicit "**this does not transfer to real-model
+activations** — real activations are neither low-dimensional nor authored" caveat (the analogue is to
+Apollo's linear probes, arXiv:2502.03407, *not* a reproduction of them); and (4) it lands in the
+*extended* population so committed pooled numbers are unchanged. There is also a presentation risk
+that it reads as "logistic regression in numpy" — the engineering that earns its place is the
+cross-validation discipline and the contrast, not the model.
+
+**Effort estimate:** ~M (an `activations.py` defining `φ`, a numpy `LinearProbe` with a train/test
+split and a permuted-label control, a contrast table vs the black-box probes on `p_stego`/`p_obfuscate`,
+and tests) — bounded, but every hour is in the *framing*, not the code.
+
+**Recommendation: GO, but only under the four constraints above, and after the v3 distribution work
+ships.** It is the single genuinely-new *kind* of evidence available within the invariants, and the
+project already has the muscle (frozen/extended split, negative control, held-out scoring) to do it
+honestly. If the a-priori-`φ` / held-out / contrast / not-on-real discipline cannot be held, **no-go**:
+a white-box number that is true by construction would weaken, not strengthen, the disciplined story.

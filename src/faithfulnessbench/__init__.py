@@ -1,8 +1,9 @@
 """FaithfulnessBench — measuring chain-of-thought faithfulness in reasoning models.
 
-A causal-intervention harness that runs four orthogonal probes over a model and
-aggregates them into a Faithfulness Card. The measurement itself is validated
-against synthetic models whose (un)faithfulness is known by construction.
+A causal-intervention harness that runs four orthogonal core probes (SHI/CSC/SIM/EAR)
+over a model and aggregates them into a Faithfulness Card, with four further held-out
+probes (FIL/IPR/PAR/SHORTCUT) for extended validation. The measurement itself is
+validated against synthetic models whose (un)faithfulness is known by construction.
 
 See ``docs/DESIGN.md`` for the methodology.
 """

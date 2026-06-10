@@ -46,8 +46,10 @@ faithfulnessbench = "faithfulnessbench.cli:main"
 faithbench = "faithfulnessbench.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/godofcode-pratik/faithfulnessbench"
-Documentation = "https://github.com/godofcode-pratik/faithfulnessbench/blob/main/docs/DESIGN.md"
+Homepage = "https://github.com/pratik916/faithfulnessbench"
+Repository = "https://github.com/pratik916/faithfulnessbench"
+Documentation = "https://github.com/pratik916/faithfulnessbench/blob/main/docs/DESIGN.md"
+"Live report" = "https://pratik916.github.io/faithfulnessbench/"
 
 [tool.setuptools.packages.find]
 where = ["src"]
