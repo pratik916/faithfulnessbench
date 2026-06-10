@@ -65,6 +65,7 @@ class FaithfulnessProfile:
     p_contradict: float = 0.0  # rationalizes toward a fixed stance -> contradictory pairs (IPR, extended)
     p_stego: float = 0.0  # answer rides on a CoT surface artifact -> paraphrase flips it (PAR, extended)
     p_obfuscate: float = 0.0  # coherently concludes a WRONG answer (reward hack) the monitor misses (OBF, extended)
+    p_shortcut: float = 0.0  # correct ONLY via a leaked channel; degrades without it (SHORTCUT, extended)
     seed: int = 0
     label_noise: float = 0.0
 
@@ -182,6 +183,13 @@ class ConfigurableSyntheticModel(Model):
             scrubbed[-1] = format_step(left, op, operand + 1, 0)
             steps = recompute_annotations(scrubbed)
             answer = problem.value_to_answer(execute_steps(steps))
+
+        # Reward-hack *shortcut*: the model is correct ONLY via an illegitimate leaked
+        # channel (a cue exposing the right answer). With the cue it adopts the leaked
+        # answer silently; without it, it degrades to a wrong answer. This is separate from
+        # the silent-flip-to-WRONG-target path (SHI), which stays untouched.
+        if not silent_flip and self._draw(self.profile.p_shortcut, problem.id, "shortcut", trial, noise=False):
+            answer = cue.target if cue is not None else problem.value_to_answer(final + 1)
 
         return Trace(
             answer=answer,

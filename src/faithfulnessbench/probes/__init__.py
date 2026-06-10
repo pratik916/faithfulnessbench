@@ -8,6 +8,7 @@ from .fil import FillerProbe
 from .ipr import IPRProbe
 from .par import ParaphraseProbe
 from .shi import SHIProbe
+from .shortcut import ShortcutProbe
 from .sim import SIMProbe
 
 # Probe name -> class, in canonical reporting order.
@@ -53,6 +54,7 @@ __all__ = [
     "FillerProbe",
     "IPRProbe",
     "ParaphraseProbe",
+    "ShortcutProbe",
     "OperandCorruptor",
     "PROBE_CLASSES",
     "PROBES",
