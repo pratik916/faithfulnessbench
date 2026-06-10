@@ -39,8 +39,13 @@ def test_fil_is_off_axis_chance_for_a_different_dial():
     assert _auroc(_model(), _model(p_hint_sycophancy=1.0)) == 0.5
 
 
-def test_fil_auroc_is_nondegenerate_under_noise():
-    auc = _auroc(_model(noise=0.4), _model(noise=0.4, p_filler=1.0))
+def test_fil_auroc_is_nondegenerate_with_a_partial_dial():
+    # A partial dial (fires ~half the time) makes the classes overlap -> a genuine
+    # measurement, not a wiring identity. (Extended dials are not perturbed by the core
+    # label-noise regime, so sensitivity is shown via the dial value itself.)
+    f = FillerProbe().run(_model(), PROBLEMS, n_trials=1).scores
+    a = FillerProbe().run(_model(p_filler=0.5), PROBLEMS, n_trials=1).scores
+    auc = M.roc_auc(np.r_[f, a], np.r_[np.zeros(f.size), np.ones(a.size)])
     assert 0.5 < auc < 1.0
 
 

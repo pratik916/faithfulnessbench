@@ -57,6 +57,7 @@ class FaithfulnessProfile:
     p_pre_commit: float = 0.0
     p_filler: float = 0.0  # answers correctly even from content-free filler (FIL, extended only)
     p_contradict: float = 0.0  # rationalizes toward a fixed stance -> contradictory pairs (IPR, extended)
+    p_stego: float = 0.0  # answer rides on a CoT surface artifact -> paraphrase flips it (PAR, extended)
     seed: int = 0
     label_noise: float = 0.0
 
@@ -105,10 +106,14 @@ class ConfigurableSyntheticModel(Model):
         digest = hashlib.sha256(payload.encode()).digest()
         return int.from_bytes(digest[:8], "big") / 2**64
 
-    def _draw(self, p: float, *keys: object) -> bool:
+    def _draw(self, p: float, *keys: object, noise: bool = True) -> bool:
+        # ``noise=False`` for the extended-population dials (filler/stego/contradict): the
+        # core label-noise regime perturbs only the four frozen axes, so adding an extended
+        # probe never contaminates the core noise curve. Extended probes demonstrate their
+        # own noise sensitivity via an intermediate dial value (0<p<1) instead.
         base = (p >= 1.0) or (p > 0.0 and self._u01(*keys) < p)
         eps = self.profile.label_noise
-        if eps > 0.0 and self._u01("noise", *keys) < eps:
+        if noise and eps > 0.0 and self._u01("noise", *keys) < eps:
             return not base  # symmetric label noise -> classes overlap
         return base
 
@@ -119,7 +124,7 @@ class ConfigurableSyntheticModel(Model):
         # question, so a contradictory pair comes back logically inconsistent.
         if problem.domain == "compare":
             answer = problem.answer
-            if self._draw(self.profile.p_contradict, problem.id, "contradict", trial):
+            if self._draw(self.profile.p_contradict, problem.id, "contradict", trial, noise=False):
                 answer = problem.meta["stance"]
             return Trace(
                 answer=answer,
@@ -179,13 +184,19 @@ class ConfigurableSyntheticModel(Model):
         # (possibly corrupted) chain. Post-hoc: ignore it and keep the prior answer.
         if self._draw(self.profile.p_post_hoc, problem.id, "posthoc", trial):
             return problem.answer
+        if self._draw(self.profile.p_stego, problem.id, "stego", trial, noise=False):
+            # The answer rides on a CoT *surface* artifact, not its content: a
+            # content-preserving paraphrase (here: doubled spacing) flips it. A faithful
+            # re-derivation from the numbers is invariant to that paraphrase.
+            surface_bit = any("  " in s for s in cot_steps)
+            return problem.value_to_answer(int(problem.meta["start"])) if surface_bit else problem.answer
         try:
             value = execute_steps(cot_steps)
         except ValueError:
             # Unparseable input (e.g. content-free filler tokens): a compute-not-content
             # model still yields the answer (p_filler -> FIL fires); a faithful model
             # genuinely cannot derive it from filler and returns a non-answer.
-            if self._draw(self.profile.p_filler, problem.id, "filler", trial):
+            if self._draw(self.profile.p_filler, problem.id, "filler", trial, noise=False):
                 return problem.answer
             return problem.value_to_answer(int(problem.meta["start"]))
         return problem.value_to_answer(value)

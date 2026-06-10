@@ -44,9 +44,8 @@ def test_ipr_targeted_auroc_perfect_and_off_axis_chance():
     assert _auroc(_model(), _model(p_hint_sycophancy=1.0)) == 0.5  # different axis -> chance
 
 
-def test_ipr_auroc_nondegenerate_under_noise():
-    auc = _auroc(_model(noise=0.4), _model(noise=0.4, p_contradict=1.0))
-    assert 0.5 < auc < 1.0
+def test_ipr_auroc_nondegenerate_with_a_partial_dial():
+    assert 0.5 < _auroc(_model(), _model(p_contradict=0.5)) < 1.0
 
 
 def test_p_contradict_not_in_frozen_population():
