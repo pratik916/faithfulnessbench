@@ -15,6 +15,11 @@ def _esc(text: object) -> str:
     return html.escape(str(text))
 
 
+def _truncate(text: object, n: int = 16) -> str:
+    s = str(text)
+    return s if len(s) <= n else s[: n - 1] + "…"
+
+
 def _lerp(a: float, b: float, t: float) -> float:
     return a + (b - a) * t
 
@@ -71,7 +76,7 @@ def bar_chart(
     def y(v: float) -> float:
         return pad_t + plot_h * (1 - max(0.0, min(vmax, v)) / vmax)
 
-    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{_esc(title)}" font-family="system-ui,sans-serif"><title>{_esc(title)}</title><desc>{_esc(title)}</desc>']
     if title:
         parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
     # y gridlines at 0, .25, .5, .75, 1 (scaled by vmax)
@@ -119,7 +124,7 @@ def roc_plot(
     def py(tpr: float) -> float:
         return pad + (1 - tpr) * plot
 
-    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{_esc(title)}" font-family="system-ui,sans-serif"><title>{_esc(title)}</title><desc>{_esc(title)}</desc>']
     if title:
         parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
     parts.append(f'<rect x="{pad}" y="{pad}" width="{plot}" height="{plot}" fill="none" stroke="#ddd"/>')
@@ -160,7 +165,7 @@ def line_chart(
         span = (ymax - ymin) or 1.0
         return pad + (1 - (y - ymin) / span) * plot
 
-    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{_esc(title)}" font-family="system-ui,sans-serif"><title>{_esc(title)}</title><desc>{_esc(title)}</desc>']
     if title:
         parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
     parts.append(f'<rect x="{pad}" y="{pad}" width="{plot}" height="{plot}" fill="none" stroke="#ddd"/>')
@@ -201,7 +206,7 @@ def reliability_diagram(reliability: dict, *, title: str = "", width: int = 440,
     def py(y: float) -> float:
         return pad + (1 - y) * plot
 
-    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{_esc(title)}" font-family="system-ui,sans-serif"><title>{_esc(title)}</title><desc>{_esc(title)}</desc>']
     if title:
         parts.append(f'<text x="{width/2}" y="20" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
     parts.append(f'<rect x="{pad}" y="{pad}" width="{plot}" height="{plot}" fill="none" stroke="#ddd"/>')
@@ -228,20 +233,22 @@ def heatmap(
     color_fn: Callable[[float], str] = faithfulness_color,
     cell: int = 64,
 ) -> str:
-    """Labelled heatmap with the numeric value drawn in each cell."""
+    """Labelled heatmap with the numeric value drawn in each cell, a color-scale legend,
+    and overflow-safe (truncated) labels."""
     pad_l, pad_t = 120, 56
     rows, cols = len(row_labels), len(col_labels)
+    legend_h = 30
     width = pad_l + cols * cell + 16
-    height = pad_t + rows * cell + 16
-    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">']
+    height = pad_t + rows * cell + 16 + legend_h
+    parts = [f'<svg viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{_esc(title)}" font-family="system-ui,sans-serif"><title>{_esc(title)}</title><desc>{_esc(title)}</desc>']
     if title:
         parts.append(f'<text x="{width/2}" y="22" text-anchor="middle" font-size="14" font-weight="600">{_esc(title)}</text>')
     for j, cl in enumerate(col_labels):
         cx = pad_l + j * cell + cell / 2
-        parts.append(f'<text x="{cx:.1f}" y="{pad_t-8}" text-anchor="middle" font-size="11" font-weight="600">{_esc(cl)}</text>')
+        parts.append(f'<text x="{cx:.1f}" y="{pad_t-8}" text-anchor="middle" font-size="11" font-weight="600">{_esc(_truncate(cl, 10))}</text>')
     for i, rl in enumerate(row_labels):
         cy = pad_t + i * cell + cell / 2
-        parts.append(f'<text x="{pad_l-8}" y="{cy+4:.1f}" text-anchor="end" font-size="11">{_esc(rl)}</text>')
+        parts.append(f'<text x="{pad_l-8}" y="{cy+4:.1f}" text-anchor="end" font-size="11">{_esc(_truncate(rl))}</text>')
         for j in range(cols):
             v = float(matrix[i][j])
             x = pad_l + j * cell
@@ -250,5 +257,13 @@ def heatmap(
             txt_fill = "#111" if (math.isnan(v) or abs(v) < 0.6) else "#fff"
             parts.append(f'<rect x="{x}" y="{y}" width="{cell-2}" height="{cell-2}" fill="{color_fn(v)}" rx="3"/>')
             parts.append(f'<text x="{x+cell/2-1:.1f}" y="{y+cell/2+4:.1f}" text-anchor="middle" font-size="12" fill="{txt_fill}">{disp}</text>')
+    # Color-scale legend: a sampled gradient bar with low/high end labels.
+    lx, ly, lw = pad_l, pad_t + rows * cell + 14, min(160, cols * cell)
+    n_swatch = 8
+    for s in range(n_swatch):
+        frac = s / (n_swatch - 1)
+        parts.append(f'<rect x="{lx + frac*lw:.1f}" y="{ly}" width="{lw/n_swatch + 1:.1f}" height="10" fill="{color_fn(frac)}"/>')
+    parts.append(f'<text x="{lx}" y="{ly+22}" font-size="10" fill="#666">low</text>')
+    parts.append(f'<text x="{lx+lw}" y="{ly+22}" text-anchor="end" font-size="10" fill="#666">high</text>')
     parts.append("</svg>")
     return "".join(parts)
