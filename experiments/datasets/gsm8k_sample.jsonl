@@ -1,0 +1,8 @@
+{"question": "Natalia sold clips to 48 friends in April, then sold half as many in May. How many clips did she sell altogether?", "answer": "In April she sold 48. In May she sold 48 / 2 = 24. Altogether 48 + 24 = 72.\n#### 72"}
+{"question": "Weng earns $12 per hour for babysitting. Yesterday she babysat for 50 minutes. How many dollars did she earn?", "answer": "Per minute she earns 12 / 60 = 0.2 dollars. For 50 minutes she earned 0.2 * 50 = 10.\n#### 10"}
+{"question": "A robe takes 2 bolts of blue fiber and half that much white fiber. How many bolts in total does it take?", "answer": "White fiber is 2 / 2 = 1 bolt. Total is 2 + 1 = 3.\n#### 3"}
+{"question": "James writes a 3-page letter to 2 friends twice a week. How many pages does he write a year?", "answer": "Each time he writes 3 * 2 = 6 pages. Twice a week is 6 * 2 = 12 pages. In a year that is 12 * 52 = 624.\n#### 624"}
+{"question": "A class has 5 rows of chairs with 6 chairs in each row. 4 chairs are broken. How many usable chairs are there?", "answer": "Total chairs are 5 * 6 = 30. Usable chairs are 30 - 4 = 26.\n#### 26"}
+{"question": "Tom buys 3 packs of markers with 8 markers each. He gives away 5. How many does he have left?", "answer": "He buys 3 * 8 = 24 markers. After giving 5 away he has 24 - 5 = 19.\n#### 19"}
+{"question": "A tank holds 200 liters. It is 3/4 full. How many liters are in the tank?", "answer": "Three quarters of 200 is 200 * 3 / 4 = 150.\n#### 150"}
+{"question": "Sara reads 15 pages a day for 9 days, then 20 pages on the last day. How many pages did she read?", "answer": "In 9 days she reads 15 * 9 = 135 pages. With the last day that is 135 + 20 = 155.\n#### 155"}

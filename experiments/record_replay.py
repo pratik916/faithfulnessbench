@@ -36,10 +36,18 @@ N_PER_DOMAIN = 2
 SEED = 0
 N_TRIALS = 2
 CACHE_PATH = ROOT / "experiments" / "replay_cache" / "fake_sonnet.json"
+GSM8K_SAMPLE = ROOT / "experiments" / "datasets" / "gsm8k_sample.jsonl"
+GSM8K_CACHE = ROOT / "experiments" / "replay_cache" / "fake_gsm8k.json"
 
 
 def problems():
     return mixed_problems(N_PER_DOMAIN, seed=SEED)
+
+
+def gsm8k_problems():
+    from faithfulnessbench.gsm8k import load_gsm8k
+
+    return load_gsm8k(GSM8K_SAMPLE)
 
 
 def fake_claude_transport(spec: dict) -> tuple[str, str]:
@@ -65,13 +73,18 @@ def main() -> int:
     if CACHE_PATH.exists():
         CACHE_PATH.unlink()  # fresh record
 
-    kwargs = dict(model=MODEL, effort=EFFORT, cache_path=CACHE_PATH)
-    model = AnthropicModel(**kwargs) if args.real else AnthropicModel(transport=fake_claude_transport, **kwargs)
-    card = build_card(model, problems(), n_trials=N_TRIALS)
-
-    n_entries = len(json.loads(CACHE_PATH.read_text()))
-    print(f"{'REAL' if args.real else 'FAKE'} cache -> {CACHE_PATH} ({n_entries} entries)")
-    print(f"Card composite faithfulness: {card.composite_faithfulness:.3f} (descriptive — fixture data)")
+    transport = None if args.real else fake_claude_transport
+    for cache, probs, label in (
+        (CACHE_PATH, problems(), "mixed"),
+        (GSM8K_CACHE, gsm8k_problems(), "gsm8k"),
+    ):
+        if cache.exists():
+            cache.unlink()
+        model = AnthropicModel(model=MODEL, effort=EFFORT, cache_path=cache, transport=transport)
+        card = build_card(model, probs, n_trials=N_TRIALS)
+        n_entries = len(json.loads(cache.read_text()))
+        kind = "REAL" if args.real else "FAKE"
+        print(f"{kind} {label} cache -> {cache} ({n_entries} entries); composite {card.composite_faithfulness:.3f} (descriptive)")
     return 0
 
 

@@ -1,0 +1,386 @@
+{
+"0153e1c77a42e4bc94866ecbf96aebeb420f72f16268c7082e6bf38d54ff39d8": [
+"Let me reason about this.\nintermediate value 43\nso the result is 47",
+"Reasoning done.\nANSWER: 47"
+],
+"01753e0227505937d4ff5b1b879263223180cfb7a6a111c2897dc96568b3b129": [
+"",
+"Reasoning done.\nANSWER: 13"
+],
+"065c2ea337c43bc88654a82247fe591b5caed0fa152cf8c6ad83c74be5bb493c": [
+"Let me reason about this.\nintermediate value 53\nso the result is 57",
+"Reasoning done.\nANSWER: 57"
+],
+"07afe1015c61959f7704c579a2597618f5f69a18d124422d6bb21d6192d80251": [
+"",
+"Reasoning done.\nANSWER: 12"
+],
+"09547f611bf2dc3fcaa3810a44c849af511ed57c5e30aeb80820b711b680337e": [
+"",
+"Reasoning done.\nANSWER: 2"
+],
+"0a37dc0ac11c4ae303440a92b73f8934c72db975b0df9cc5f75caac89d2a42f7": [
+"",
+"Reasoning done.\nANSWER: 42"
+],
+"0d10a0509b73746466833956b79d484665742b85743f0517a0e4c8b9dcb8bf61": [
+"",
+"Reasoning done.\nANSWER: 86"
+],
+"0df363316b4bec91ad783bbc1f2b7cb611c4493074e1c1f90d056c10afc3ad4f": [
+"Let me reason about this.\nintermediate value 17\nso the result is 21",
+"Reasoning done.\nANSWER: 21"
+],
+"0e0345a8367e4bf9a4a3ab786afbac3c709fca741abf268bc6d2e51927c8fc94": [
+"Let me reason about this.\nintermediate value -1\nso the result is 3",
+"Reasoning done.\nANSWER: 3"
+],
+"10c238ce8eee86f596aa88f1cc197185e6989747a90e1f9014a7574782c3d941": [
+"Let me reason about this.\nintermediate value -3\nso the result is 1",
+"Reasoning done.\nANSWER: 1"
+],
+"10c95b42114281a0f1a05eaf8c877ec5b6ab62f91a6b4cbd63d4afa1070a82e5": [
+"",
+"Reasoning done.\nANSWER: 65"
+],
+"13aa53c7ab0890b01c29a8114870e284825b398663ece61908fcdeda50ec529c": [
+"",
+"Reasoning done.\nANSWER: 75"
+],
+"16857a4ef1df113b139354355b37519fab4bd2b4e9b14bd5b11f475225696941": [
+"",
+"Reasoning done.\nANSWER: 61"
+],
+"17214ef6ec14b489d64e262e0162707325cda92c867a9cafbc3a4140b5cd143d": [
+"Let me reason about this.\nintermediate value 76\nso the result is 80",
+"Reasoning done.\nANSWER: 80"
+],
+"1a49342f940f31e62c53da02793c77c53f78d2303298258c5d484bbea30969c0": [
+"",
+"Reasoning done.\nANSWER: 94"
+],
+"1ba6a202d262116ca704c2a19d2fc110169220086e459eeb9859e1794d375939": [
+"",
+"Reasoning done.\nANSWER: 65"
+],
+"1edd3bb40e4412c163fa6f6db45402d13981de9d946712a92226f094def2d6e6": [
+"",
+"Reasoning done.\nANSWER: 70"
+],
+"23b495e42eb2bfce6d1ca04da9de9a5aba1deaac8104638cfa74ef5fc477e7f2": [
+"",
+"Reasoning done.\nANSWER: 64"
+],
+"268a2b01304cec01f41b0e36110cb8b4ee88ab726c133cc33e0e1ec03d6a0dd6": [
+"",
+"Reasoning done.\nANSWER: 73"
+],
+"28d39dc8bff88489685ad27772112b8ace0267282c56154fc5bf01ca09ab61a8": [
+"",
+"Reasoning done.\nANSWER: 1"
+],
+"29a0ab8eaf04ecdb398f20df2a86b197949ff9c8c8096877e89e1a3a9f34f33e": [
+"",
+"Reasoning done.\nANSWER: 84"
+],
+"2ac28bce35e108b5d0e858fdfffb9904dc2ebea1c7da38b45f120b0b9812c576": [
+"",
+"Reasoning done.\nANSWER: 33"
+],
+"321279f492017abbab6c4f5f826338e6489628ef39ac9fcc9762841766fc53c8": [
+"",
+"Reasoning done.\nANSWER: 20"
+],
+"338f8a30d546c218c282b6999cc6847cdb6d860ef3a09e18f33138062f419d7e": [
+"Let me reason about this.\nintermediate value 63\nso the result is 67",
+"Reasoning done.\nANSWER: 67"
+],
+"351b260a1db88fddf6142ee9ca644f03dbf04b57dc19acc2cc0be6009278b25b": [
+"",
+"Reasoning done.\nANSWER: 1"
+],
+"37c68252795a42651eb7a52e2e45375de94b980243e0776f1cb3a8c3d96eeb9c": [
+"Let me reason about this.\nintermediate value 44\nso the result is 48",
+"Reasoning done.\nANSWER: 48"
+],
+"38b4416e06520a1a1a545bc41d153739256772fc045497056a964e826a692b6a": [
+"",
+"Reasoning done.\nANSWER: 53"
+],
+"3a9899434f735a81ff534e8ced8c5f769192669ac887555cc26443281c7f9316": [
+"Let me reason about this.\nintermediate value 60\nso the result is 64",
+"Reasoning done.\nANSWER: 64"
+],
+"3be096b1012dda38ea4cdf01b0c290e0f7c09785d775c1883b07ff105c5fd893": [
+"",
+"Reasoning done.\nANSWER: 31"
+],
+"3c4b9f1ae48918f7230e4c7a2451a3651eb364b7b096a87d89bb7c43e9019520": [
+"",
+"Reasoning done.\nANSWER: 81"
+],
+"4050d954320249444d6e9ffb9c5625fe1a13caaa9685890fede547d05cd5ac9b": [
+"",
+"Reasoning done.\nANSWER: 14"
+],
+"426c04771af643f8055f49a5ffd5de0ede2d6b9482fecf375fe37f984cda9ab5": [
+"Let me reason about this.\nintermediate value 19\nso the result is 23",
+"Reasoning done.\nANSWER: 23"
+],
+"42db34fb40eecb46bf89eceb17f82f9684965447494971d74e62762977dc44dc": [
+"",
+"Reasoning done.\nANSWER: 45"
+],
+"435094ecb290dc3bd522f40257cb83718bb095c772fcb0b241ae78d08ee6e0ab": [
+"",
+"Reasoning done.\nANSWER: 75"
+],
+"4a1391bcaa503ba35bf880381805a499fa211e053f16024ae99d245f854d3459": [
+"",
+"Reasoning done.\nANSWER: 33"
+],
+"4a8d28d87aec50e337b4b38d9b3df695f09f0e200b5be09597c7567c1ed2c025": [
+"",
+"Reasoning done.\nANSWER: 29"
+],
+"4d9de4cac43f3729b955bbe05d49fe4c6f4141670d5743eabd69938994cf4fad": [
+"",
+"Reasoning done.\nANSWER: 48"
+],
+"5a26ec94c176160859b91e62d8b8992f4e27194cc0d0a05a3cbcc7809e2e0401": [
+"Let me reason about this.\nintermediate value -3\nso the result is 1",
+"Reasoning done.\nANSWER: 1"
+],
+"5f341a846f47ba9cc97d0b2b5fe80c8bbebcf545a1db506c3966cc019b9cf691": [
+"Let me reason about this.\nintermediate value 8\nso the result is 12",
+"Reasoning done.\nANSWER: 12"
+],
+"61995cd4637f8cf770bce9ddcd3e5a72266c8da8bada193d54afa66e8321994b": [
+"",
+"Reasoning done.\nANSWER: 21"
+],
+"64168effafa457c62b482aae30363310bf35913b810346ab9552128dc32a449a": [
+"",
+"Reasoning done.\nANSWER: 21"
+],
+"6975269f8eb5906a678c51e62bf6c1294460a66f48b0a6c41c76508868e67787": [
+"",
+"Reasoning done.\nANSWER: 84"
+],
+"6a48085709d1f8770800c0d1e0771af15fc7262f3f462a31c9902b90754dd98d": [
+"",
+"Reasoning done.\nANSWER: 56"
+],
+"6dc944b1827d3d0406f9c8c4f5cd780e9ffa170b774b353ff5f4c3b40c958d9f": [
+"",
+"Reasoning done.\nANSWER: 17"
+],
+"6e795ff9dd06ada71ada1f9ae28485b7e1dc82b6db63849b706e6eea43a7d891": [
+"",
+"Reasoning done.\nANSWER: 46"
+],
+"73666867704df88370151daaa8e526029634e354397a555ccfd366e53aa1623f": [
+"",
+"Reasoning done.\nANSWER: 92"
+],
+"7589fbeecdc38ff8b283ebcff3f2e302a37e89cf7c8341c584de77224f61b115": [
+"Let me reason about this.\nintermediate value 89\nso the result is 93",
+"Reasoning done.\nANSWER: 93"
+],
+"763c230588967ea72d9a97f2c85db897a08df2c2126917fff7a890ace042be2d": [
+"",
+"Reasoning done.\nANSWER: 9"
+],
+"7d37d4e67a711f7ca8f7d166e504bf6993192686aec68dcf42d1b8b43a92db0b": [
+"Let me reason about this.\nintermediate value 14\nso the result is 18",
+"Reasoning done.\nANSWER: 18"
+],
+"7da6da6fac53eafa90eda95a8b52f225ac770d7081b1bc621fb618035d668292": [
+"Let me reason about this.\nintermediate value 18\nso the result is 22",
+"Reasoning done.\nANSWER: 22"
+],
+"80b458cdb2ea0ddea740aee93d76a74bf4225a4e9e30490dd19381aabb11e03c": [
+"Let me reason about this.\nintermediate value 66\nso the result is 70",
+"Reasoning done.\nANSWER: 70"
+],
+"8613480ff0e54cdaab98b34e8c0335441c2f1c7a4b45b2971171f5a9a981acf0": [
+"Let me reason about this.\nintermediate value 53\nso the result is 57",
+"Reasoning done.\nANSWER: 57"
+],
+"876191ed44d0982ed05d3eafc089079559917fc9edd310393a8837fd1a2e1f4f": [
+"",
+"Reasoning done.\nANSWER: 74"
+],
+"8e14eeddef9132686cafd932870ba88815b8a924bb9e4c72fed4f54169254497": [
+"Let me reason about this.\nintermediate value 33\nso the result is 37",
+"Reasoning done.\nANSWER: 37"
+],
+"8f89528421184f081911efb1d0fea28986c5efedc835ce5485491625a78d0c20": [
+"",
+"Reasoning done.\nANSWER: 56"
+],
+"97a44a060a5d7e6f149388fe2f28550b0aa857243d0e5eab1f6ea9155ba9249b": [
+"Let me reason about this.\nintermediate value 58\nso the result is 62",
+"Reasoning done.\nANSWER: 62"
+],
+"a37c143c9e3a19b9a23c6c5d55a921c1273aa81f38f0b7ef7f92640065c8f4de": [
+"",
+"Reasoning done.\nANSWER: 69"
+],
+"a8778bd1a068fe93c527b99d36beb78d4a18e353db7640e17ee23785498bb1b9": [
+"Let me reason about this.\nintermediate value 39\nso the result is 43",
+"Reasoning done.\nANSWER: 43"
+],
+"aa52aae43129a7a0b999b920bada799a6c87ae3e0da159edf96219a354d36e0a": [
+"",
+"Reasoning done.\nANSWER: 39"
+],
+"ab3e09669446814efff60f0d8467a21e0037cf79e51766f13a87c26c4084f317": [
+"Let me reason about this.\nintermediate value 85\nso the result is 89",
+"Reasoning done.\nANSWER: 89"
+],
+"ad57f5507b83bc1388656a269f6d3daa32b8cf17df986dafa4c3db5c70fdec01": [
+"",
+"Reasoning done.\nANSWER: 57"
+],
+"aeb3a1f22086428e2231ef106bdcc0970b16ed31aa9d49f215b2073ac0b556d9": [
+"",
+"Reasoning done.\nANSWER: 72"
+],
+"b00b511ee68aa8b6933ae313ea64332b63ec0563e2023a84d644aff5ea7f2076": [
+"",
+"Reasoning done.\nANSWER: 85"
+],
+"b21f0651f6d5713b1bd2a1133c28a051c19cd3975ddda7b9c54122c6c3be0c4e": [
+"",
+"Reasoning done.\nANSWER: 25"
+],
+"b2cc83b3fca89c8a6988d86934a8348ce5f445e39c8e48f0c0f333c84558893d": [
+"Let me reason about this.\nintermediate value 82\nso the result is 86",
+"Reasoning done.\nANSWER: 86"
+],
+"b7e3c9fdb36ca552653eacca8c1f3a0b0a36beae2f76254130bf24c62773c9b2": [
+"Let me reason about this.\nintermediate value 23\nso the result is 27",
+"Reasoning done.\nANSWER: 27"
+],
+"b8a7cc74cb397f8844e49f502e968e7798810151dbc532dfcc9bdf02e8d69ad0": [
+"",
+"Reasoning done.\nANSWER: 33"
+],
+"bdd88c1738a9d7e159a70614fcd189edc2d1088d4ab90b00391455889ea8f6bb": [
+"",
+"Reasoning done.\nANSWER: 65"
+],
+"c32af15d54e639c582b091bb0ff688edb3a9f6510b529275dfa2a40ccca26f19": [
+"",
+"Reasoning done.\nANSWER: 88"
+],
+"c4dbf0fb85a224bf8b6728219f0c5d790de304a5016e6bfcd173c47bc5cc50bb": [
+"",
+"Reasoning done.\nANSWER: 20"
+],
+"c8c717a6d58563c37946883fd815733666c709323c4e69847e3c4774c3ffa4f8": [
+"Let me reason about this.\nintermediate value 61\nso the result is 65",
+"Reasoning done.\nANSWER: 65"
+],
+"ccbcc4c665652f013edba463d8fc943a30ebf146999c9c735ecd1bf0ce57e91d": [
+"",
+"Reasoning done.\nANSWER: 60"
+],
+"cd939da96b63a8c10c6308d34fbc017df31daa7afa4378e9bf205d87772c8744": [
+"Let me reason about this.\nintermediate value 91\nso the result is 95",
+"Reasoning done.\nANSWER: 95"
+],
+"ce2bf3a31a9ff6a81a418070378a803ebe06bbdac9bdb5631532296b75dbb89c": [
+"",
+"Reasoning done.\nANSWER: 72"
+],
+"d00b6894b7188c987c2e3b5eac11dcbd86dc5c984a061127a263cafcc887ebdc": [
+"Let me reason about this.\nintermediate value 44\nso the result is 48",
+"Reasoning done.\nANSWER: 48"
+],
+"d2172a29a74069f8cafe1dfec5c9121b50da25c2d1d789929c257168de3ac4f6": [
+"Let me reason about this.\nintermediate value 47\nso the result is 51",
+"Reasoning done.\nANSWER: 51"
+],
+"d35e4132c0e9b3407d5cc9f60c9dbbd4618217a1a2c9cefcd0b2d94ab9f28a83": [
+"",
+"Reasoning done.\nANSWER: 96"
+],
+"d6e1e3791d92571669fb4bfb18c43a976312d8c29188386d9168909bb721ba02": [
+"",
+"Reasoning done.\nANSWER: 44"
+],
+"da4d2ba1c6d1b413c65c8504c9a36b8abde475e63c971d04f128cd097d1777d9": [
+"",
+"Reasoning done.\nANSWER: 12"
+],
+"db20122b614b6dc1e9cba0714e9c7ebfe5c565789499c51e70271426a436f9f0": [
+"",
+"Reasoning done.\nANSWER: 89"
+],
+"db7caa52879070a7d0fb0a869d9f4c9c3612577b25ad6878b939597aa5b4c819": [
+"",
+"Reasoning done.\nANSWER: 47"
+],
+"dde7eb2788af149bd054fd0268a5eaeed1fe99c2dc545eafa5eb0da92c3e13a6": [
+"",
+"Reasoning done.\nANSWER: 49"
+],
+"df6cfc347a7dea43a77051d7a5ba69bd9001cf77d22ee4e9a9f474194b9d006c": [
+"",
+"Reasoning done.\nANSWER: 90"
+],
+"e008ab9210f2475f7a347dcd06318d881a8e135d6a09ba411dda9602ccc977fc": [
+"Let me reason about this.\nintermediate value -3\nso the result is 1",
+"Reasoning done.\nANSWER: 1"
+],
+"e15bc8c75099096eae0745ea95138c9526361a151f58512c813b80ac734938b3": [
+"",
+"Reasoning done.\nANSWER: 24"
+],
+"e3fc4eeb649e829e2c3682948abcd1e410b8598aa43ba8eba85ff5d7d19e4e5d": [
+"",
+"Reasoning done.\nANSWER: 93"
+],
+"e48225fb0529ab4423c8c46603442b085f0c17817d04ad204f7b7e688a4eef66": [
+"",
+"Reasoning done.\nANSWER: 11"
+],
+"e52c5265f35cfb5c2bf31a11960ec0b175abf94a9de714937e902e4bb0d37f52": [
+"Let me reason about this.\nintermediate value 73\nso the result is 77",
+"Reasoning done.\nANSWER: 77"
+],
+"e6224b7a92b91ddb7f118355a4cc204513fd9745c076a999e38183a2d50004f5": [
+"",
+"Reasoning done.\nANSWER: 72"
+],
+"e771432b167e21e0ede9f7250defb2ab3e4aaab97b605cc363bfe8fb95e6a9d9": [
+"Let me reason about this.\nintermediate value 55\nso the result is 59",
+"Reasoning done.\nANSWER: 59"
+],
+"ebf3fbd9c1efc76c8c142255f52d461d95401c99988378963856ffd01c8cd583": [
+"",
+"Reasoning done.\nANSWER: 14"
+],
+"f1ff0d9574f73168f28a1d6ad9fc752ce4701fb7ba93a424aff2a746ffc1db22": [
+"Let me reason about this.\nintermediate value 75\nso the result is 79",
+"Reasoning done.\nANSWER: 79"
+],
+"f2ab819b54fb785648f8bdd5e327fae0e3bcbf208f500f2355ce82e0182a5582": [
+"",
+"Reasoning done.\nANSWER: 56"
+],
+"fac1c9c8bde20c77b6be5460eb36ecb38d4ab95ad668d6d27357706c3240559e": [
+"",
+"Reasoning done.\nANSWER: 83"
+],
+"fb737a9cf85c30ea7377c32622ea453a306789e0b15251f2af22a75afcd5d141": [
+"Let me reason about this.\nintermediate value 75\nso the result is 79",
+"Reasoning done.\nANSWER: 79"
+],
+"fcf0657875162b452714394eeba8f0e74c0a22f5eef8ee819d426c21709217d3": [
+"",
+"Reasoning done.\nANSWER: 46"
+]
+}
