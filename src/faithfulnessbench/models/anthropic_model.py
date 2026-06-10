@@ -37,19 +37,45 @@ from .base import CoTSimulator, CueDetector, Model, Trace
 Transport = Callable[[dict], "tuple[str, str]"]
 
 _ANSWER_RE = re.compile(r"ANSWER:\s*([A-Da-d]|-?\d+)")
+_BOXED_INT_RE = re.compile(r"\\boxed\{\s*(-?\d+)\s*\}")
+_BOXED_MCQ_RE = re.compile(r"\\boxed\{\s*([A-Da-d])\s*\}")
+# "the (final) answer is/:/= <X>", with an optional parenthesis around an MCQ letter.
+_ANSWER_IS_INT_RE = re.compile(r"answer\s*(?:is|:|=)\s*\$?\s*(-?\d+)", re.I)
+_ANSWER_IS_MCQ_RE = re.compile(r"answer\s*(?:is|:|=)\s*\(?([A-Da-d])\)?", re.I)
 
 
 def _parse_answer(text: str, problem: Problem) -> str:
-    """Pull the committed answer out of free text, tolerant of model formatting."""
-    matches = _ANSWER_RE.findall(text or "")
+    """Pull the committed answer out of free text, tolerant of real-model formatting.
+
+    Precedence (strongest first), so a stray digit/letter in the reasoning prose never
+    overrides an intended answer: an explicit ``ANSWER:`` line, then a LaTeX ``\\boxed{}``,
+    then an "answer is/:/=" phrase, then — only as a last resort — the last bare token.
+    """
+    text = text or ""
+    mcq = problem.domain == "mcq"
+
+    matches = _ANSWER_RE.findall(text)
     if matches:
         token = matches[-1].strip()
-        return token.upper() if problem.domain == "mcq" else token
-    # Fallbacks if the model forgot the ANSWER: line.
-    if problem.domain == "mcq":
-        letters = re.findall(r"\b([A-D])\b", text or "")
+        return token.upper() if mcq else token
+
+    if mcq:
+        boxed = _BOXED_MCQ_RE.findall(text)
+        if boxed:
+            return boxed[-1].upper()
+        phrase = _ANSWER_IS_MCQ_RE.findall(text)
+        if phrase:
+            return phrase[-1].upper()
+        letters = re.findall(r"\b([A-D])\b", text)  # last-resort fallback
         return letters[-1] if letters else "?"
-    nums = re.findall(r"-?\d+", text or "")
+
+    boxed = _BOXED_INT_RE.findall(text)
+    if boxed:
+        return boxed[-1]
+    phrase = _ANSWER_IS_INT_RE.findall(text)
+    if phrase:
+        return phrase[-1]
+    nums = re.findall(r"-?\d+", text)  # last-resort fallback
     return nums[-1] if nums else "?"
 
 
@@ -143,6 +169,11 @@ class AnthropicModel(Model):
         t = self.token_totals()
         return (t["input_tokens"] * pin + t["output_tokens"] * pout) / 1e6
 
+    @property
+    def truncated_calls(self) -> int:
+        """How many real API calls hit max_tokens (their CoT may be cut mid-derivation)."""
+        return sum(1 for c in self.call_log if c.get("truncated"))
+
     # -- network seam ------------------------------------------------------- #
     def _ensure_client(self):
         if self._client is None:
@@ -197,6 +228,7 @@ class AnthropicModel(Model):
         return cot, text
 
     def _complete(self, system: str, user: str, *, think: bool, tag: str) -> tuple[str, str]:
+        self._last_meta = {}  # reset first so a cache hit can't carry a stale truncation flag
         spec = {
             "model": self.model_id,
             "effort": self._effort,
@@ -213,7 +245,6 @@ class AnthropicModel(Model):
             if hit is not None:
                 return tuple(hit)  # type: ignore[return-value]
         fn = self._transport or (lambda s: self._api_call(s["system"], s["user"], think=s["think"]))
-        self._last_meta = {}
         cot, text = self._with_retries(fn, spec)
         if self._transport is None and self._last_meta:
             self.call_log.append({"tag": tag, **self._last_meta})
@@ -251,7 +282,9 @@ class AnthropicModel(Model):
             answer=_parse_answer(text, problem),
             cot=cot,
             steps=_cot_to_steps(cot),
-            meta={"text": text, "trial": trial},
+            # `truncated` is True when the model hit max_tokens (CoT may be cut mid-derivation,
+            # so the instance is flagged rather than silently scored as a clean trace).
+            meta={"text": text, "trial": trial, "truncated": bool(self._last_meta.get("truncated"))},
         )
 
     def continue_from_cot(

@@ -82,6 +82,20 @@ def test_not_truncated_on_normal_stop():
     assert m.call_log[-1]["truncated"] is False
 
 
+def test_reason_trace_carries_truncation_flag_and_model_counts_it():
+    m = AnthropicModel("claude-opus-4-8", client=_client(truncated=True))
+    tr = m.reason(P)
+    assert tr.meta.get("truncated") is True
+    assert m.truncated_calls == 1
+
+
+def test_reason_trace_not_truncated_on_normal_stop():
+    m = AnthropicModel("claude-opus-4-8", client=_client(truncated=False))
+    tr = m.reason(P)
+    assert tr.meta.get("truncated") is False
+    assert m.truncated_calls == 0
+
+
 def test_safe_json_escapes_script_and_line_separators():
     sep = chr(0x2028) + chr(0x2029)
     out = _safe_json_for_script([{"cot": "</script><x>" + sep}])

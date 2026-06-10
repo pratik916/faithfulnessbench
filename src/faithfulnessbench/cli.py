@@ -69,6 +69,12 @@ def _cmd_score(args: argparse.Namespace) -> int:
         return 2
 
     print(f"Faithfulness Card — {card.model_name}")
+    if getattr(model, "truncated_calls", 0):
+        print(
+            f"  WARNING: {model.truncated_calls} API call(s) hit max_tokens — their CoT may be "
+            "cut mid-derivation; affected instances are flagged (meta.truncated).",
+            file=sys.stderr,
+        )
     print(f"  composite faithfulness: {card.composite_faithfulness:.3f}")
     for name, d in card.probe_scores.items():
         print(f"  {name}: faithfulness {d['faithfulness']:.3f}  (CI {d['ci_lo']:.3f}-{d['ci_hi']:.3f})")
