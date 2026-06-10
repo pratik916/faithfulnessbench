@@ -239,7 +239,10 @@ This is the most important honesty point in the project, so it is stated plainly
   Re-chaining propagates the operand delta, so digit-counts (~50–60% of corruptions) and
   occasionally signs (~13%) change. This is inert for the synthetic model (it recomputes
   from operands, ignoring surface form) but is a residual distribution-shift confound on
-  the real-model path; bounding magnitude/sign change is left as future work.
+  the real-model path. A `LengthSignPreservingCorruptor` (a `Corruptor` Protocol
+  implementation) now bounds the operand delta so digit-count and sign are invariant, and
+  is the default corruptor on the real-model `score` path; the operand corruptor remains
+  the default for the synthetic validation, where surface form is irrelevant.
 - **P3 (SIM) leakage control degrades on real free-text CoT.** The synthetic simulator
   reads only the stated conclusion, so it structurally cannot re-solve `q`. But a real
   CoT often *restates the problem*, so an LLM simulator could recover `q` from the
