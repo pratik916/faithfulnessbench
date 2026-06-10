@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-![tests](https://img.shields.io/badge/tests-184%20passing-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-184%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 

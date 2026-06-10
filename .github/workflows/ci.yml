@@ -31,7 +31,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           coverage run --source=src/faithfulnessbench -m pytest -q
-          coverage report
+          coverage report --fail-under=90   # keeps the README "coverage ≥90%" badge honest
       # NOTE: mypy is intentionally deferred — the codebase has near-zero annotations today,
       # so a type-check gate is a separate, multi-day cleanup tracked as future work.
       - name: Check the advertised test count has not drifted
