@@ -358,7 +358,10 @@ def render_report(report: dict) -> str:
                      "<strong>CSC</strong> and <strong>SIM</strong> hold at the ceiling — their operand-corruption and decoy "
                      "interventions remain discriminating on the very same instances. So instance hardness measures "
                      "<em>differential</em> probe robustness — which probes carry intrinsic blind spots — not the uniform "
-                     "sensitivity a relabeling sweep reports. (Synthetic, deterministic, no key.)</p>")
+                     "sensitivity a relabeling sweep reports. The SHI/EAR decline is the exact dilution identity "
+                     "AUROC = 1 − ½·(hard-instance fraction): at full hardness the faithful and unfaithful behaviors are "
+                     "byte-identical, so 0.5 is the correct <em>tie</em> value, not a modeling artifact — which is the point, "
+                     "the blind spot is real. (Synthetic, deterministic, no key.)</p>")
         parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_hardness']}</div></div>")
         parts.append("</section>")
 

@@ -233,7 +233,11 @@ This is the most important honesty point in the project, so it is stated plainly
   the uniform degradation a relabeling sweep reports. This is only constructible because the
   synthetic model is behaviorally *exact*: short chains alone do **not** degrade an exact model
   (verified — an exact solver separates the classes regardless of chain length), so the honest
-  hard instance is one of *behavioral coincidence*, not merely *fewer steps*.
+  hard instance is one of *behavioral coincidence*, not merely *fewer steps*. The SHI/EAR decline
+  is the exact `AUROC = 1 − ½·h` dilution identity (binary scores, the faithful class pinned at one
+  value): at `h = 1` the faithful and unfaithful behaviors are byte-identical, so 0.5 is the correct
+  *tie* value, not an emergent curve — that the blind spot is exact is a feature of the honesty, not
+  a caveat against it.
 
 - **Obfuscated reward hacking (OBF) is an offline known-label *analogue*, not a reproduction.**
   A `p_obfuscate` model coherently concludes a *wrong* answer via a **generic** surface scrub
