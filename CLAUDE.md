@@ -12,7 +12,7 @@ A `.venv/` is checked out; prefix commands with `.venv/bin/` (or activate it). `
 
 ```bash
 pip install -e ".[dev]"                         # install with test/lint deps
-pytest                                           # full suite (229 tests, no network/key; 1 skips when anthropic is installed)
+pytest                                           # full suite (238 tests, no network/key; 1 skips when anthropic is installed)
 pytest tests/test_probes.py -q                   # one file
 pytest tests/test_metrics.py::test_auc_known_value  # one test
 ruff check src tests experiments tools           # lint (CI-gated)
@@ -52,3 +52,4 @@ The expected validation outcome — and a regression signal if it breaks — is:
 - **Determinism is load-bearing.** Synthetic randomness is a hashed function of `(seed, problem.id, keys, trial)` — never use `random`/unseeded `np.random` (a seeded `np.random.default_rng(seed)` is fine where used, e.g. `whitebox.py`'s permutation control). The same seed must reproduce the same numbers.
 - The arithmetic CoT step format is fixed — `"L op R = V"` — and `problems.py` owns its parse/execute/corrupt helpers. Probes operate on step *text*, not synthetic internals.
 - Real-model code targets the Anthropic SDK (adaptive thinking for reasoning, thinking disabled for the "answer from given reasoning" probes; current model IDs `claude-sonnet-4-6` / `claude-opus-4-8`). The network call is isolated behind an injectable `transport` so the adapter is unit-tested without a key — preserve that seam. **Consult the `claude-api` skill before changing integration code** rather than relying on memory.
+- **No `Co-Authored-By: Claude` trailer** on commits in this repo (public portfolio repo, sole-author attribution) — and no "Generated with Claude Code" line. This overrides the default commit-message instruction.

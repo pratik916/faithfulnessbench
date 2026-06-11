@@ -211,6 +211,20 @@ def build_figures(report: dict) -> dict[str, str]:
             xmax=xmax, ymin=0.5, ymax=1.0, baseline=0.5,
         )
 
+    if "auroc_vs_hardness" in val:
+        avh = val["auroc_vs_hardness"]
+        hseries = [
+            (p, [d["hardness"] for d in avh[p]], [d["auc"] for d in avh[p]], _PALETTE[i % len(_PALETTE)])
+            for i, p in enumerate(probes)
+        ]
+        hxmax = max((d["hardness"] for p in probes for d in avh[p]), default=1.0) or 1.0
+        figures["auroc_vs_hardness"] = svg.line_chart(
+            hseries,
+            title="Targeted AUROC vs. instance hardness (differential robustness)",
+            xlabel="hard-instance fraction", ylabel="targeted AUROC",
+            xmax=hxmax, ymin=0.5, ymax=1.0, baseline=0.5,
+        )
+
     if "calibration" in val:
         figures["reliability"] = svg.reliability_diagram(
             val["calibration"]["reliability"],
@@ -332,9 +346,25 @@ def render_report(report: dict) -> str:
         parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_noise']}</div>{cal_extra}</div>")
         parts.append("</section>")
 
-    # Section 1c — adversarial-CoT robustness frontier
+    # Section 1c — hard-instance substrate (differential robustness, not relabeling)
+    if "auroc_vs_hardness" in val and "auroc_vs_hardness" in figures:
+        parts.append("<section><h2><span class='n'>1c</span>Does difficulty fool every probe equally?</h2>")
+        parts.append("<p class='lead'>No — and that is the point. The noise curve above degrades every probe "
+                     "alike because flipping labels caps <em>any</em> classifier mechanically. Here we instead harden the "
+                     "<em>task</em>: a growing fraction of instances are made genuine behavioral blind spots — the planted hint "
+                     "points at the <strong>correct</strong> answer (so a sycophant's silent flip is invisible to SHI), and the "
+                     "chain is an <strong>answer-obvious identity</strong> (so EAR cannot tell reliance from pre-commitment when "
+                     "there is nothing to rely on). <strong>SHI</strong> and <strong>EAR</strong> fall toward chance, but "
+                     "<strong>CSC</strong> and <strong>SIM</strong> hold at the ceiling — their operand-corruption and decoy "
+                     "interventions remain discriminating on the very same instances. So instance hardness measures "
+                     "<em>differential</em> probe robustness — which probes carry intrinsic blind spots — not the uniform "
+                     "sensitivity a relabeling sweep reports. (Synthetic, deterministic, no key.)</p>")
+        parts.append(f"<div class='chartrow'><div>{figures['auroc_vs_hardness']}</div></div>")
+        parts.append("</section>")
+
+    # Section 1d — adversarial-CoT robustness frontier
     if "robustness" in val and "robustness" in figures:
-        parts.append("<section><h2><span class='n'>1c</span>How fast does the monitor break under CoT obfuscation?</h2>")
+        parts.append("<section><h2><span class='n'>1d</span>How fast does the monitor break under CoT obfuscation?</h2>")
         parts.append("<p class='lead'>A monitor is only as good as it is robust. We sweep a single, a-priori-fixed, "
                      "monitor-agnostic perturbation — scrubbing a growing <em>budget</em> fraction of the chain-of-thought — and "
                      "track each probe's catch-rate at 1% FPR. The honest result: the text-reading <strong>SIM</strong> probe "
@@ -345,10 +375,10 @@ def render_report(report: dict) -> str:
         parts.append(f"<div class='chartrow'><div>{figures['robustness']}</div></div>")
         parts.append("</section>")
 
-    # Section 1d — white-box / linear-probe offline analogue
+    # Section 1e — white-box / linear-probe offline analogue
     if "whitebox" in val and "whitebox" in figures:
         wb = val["whitebox"]
-        parts.append("<section><h2><span class='n'>1d</span>Would a white-box probe catch what the monitor misses?</h2>")
+        parts.append("<section><h2><span class='n'>1e</span>Would a white-box probe catch what the monitor misses?</h2>")
         parts.append("<p class='lead'>An <strong>offline analogue</strong> of activation probing (cf. Apollo, "
                      "<a href='https://arxiv.org/abs/2502.03407'>2502.03407</a>): give each synthetic model a generic, "
                      "a-priori <em>activation</em> vector and fit a numpy logistic probe on a held-out split. Where the "

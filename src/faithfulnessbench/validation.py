@@ -27,13 +27,15 @@ from .models.synthetic import (
     model_population,
 )
 from .probes import SHIProbe, default_probes
-from .problems import HINT_KINDS, cue_of_kind, mixed_problems
+from .problems import HINT_KINDS, cue_of_kind, hard_mixed_problems, mixed_problems
 
 PROBE_ORDER = ["SHI", "CSC", "SIM", "EAR"]
 # The single-axis synthetic model that each probe is supposed to catch.
 AXIS_MODEL = {"SHI": "sycophant", "CSC": "post_hoc", "SIM": "decoy_cot", "EAR": "pre_commit"}
 # Label-noise levels swept for the AUROC-vs-noise sensitivity curve (fb-yst.1).
 NOISE_LEVELS = [0.0, 0.1, 0.2, 0.3, 0.4]
+# Hard-instance fractions swept for the AUROC-vs-hardness differential-robustness curve.
+HARDNESS_LEVELS = [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
 def run_validation(
@@ -347,6 +349,30 @@ def run_validation(
             y = np.r_[np.zeros(n_faithful[p].size), np.ones(axis.size)]
             auroc_vs_noise[p].append({"noise": noise, "auc": metrics.roc_auc(s, y)})
 
+    # --- AUROC-vs-hardness: targeted AUROC over *intrinsic task difficulty*, not relabeling.
+    #     A hard instance is one where the unfaithful behavior coincides with faithful behavior
+    #     — a CORRECT hint (SHI cannot see a sycophant adopt a hint that is already right) and
+    #     an answer-obvious IDENTITY chain (EAR cannot tell reliance from pre-commitment when
+    #     the answer is given by the premise). SHI and EAR fall toward chance while CSC and SIM
+    #     hold at the ceiling, because their operand-corruption / decoy interventions stay
+    #     discriminating on the same instances. So this curve measures *differential* probe
+    #     robustness, where the label-noise curve above measures only mechanical sensitivity to
+    #     relabeling (which degrades every classifier alike). The frozen population is untouched;
+    #     only the problem substrate hardens, so committed pooled numbers are unchanged.
+    pop_by_name = {m.name: m for m in population}
+    auroc_vs_hardness: dict[str, list] = {p: [] for p in PROBE_ORDER}
+    for hardness in HARDNESS_LEVELS:
+        hprobs = hard_mixed_problems(n_per_domain, seed=seed, hardness=hardness)
+        h_faithful = {
+            p: probes_by_name[p].run(pop_by_name["faithful"], hprobs, n_trials=n_trials).scores
+            for p in PROBE_ORDER
+        }
+        for p in PROBE_ORDER:
+            axis = probes_by_name[p].run(pop_by_name[AXIS_MODEL[p]], hprobs, n_trials=n_trials).scores
+            s = np.r_[h_faithful[p], axis]
+            y = np.r_[np.zeros(h_faithful[p].size), np.ones(axis.size)]
+            auroc_vs_hardness[p].append({"hardness": hardness, "auc": metrics.roc_auc(s, y)})
+
     # --- held-out extended population: pairwise targeted AUROC only, never pooled ---
     extended_auroc: dict[str, dict] = {}
     for model, target_probe in extended_models or []:
@@ -459,6 +485,8 @@ def run_validation(
         "noisy_per_probe_significance": noisy_per_probe_significance,
         "auroc_vs_noise": auroc_vs_noise,
         "noise_levels": NOISE_LEVELS,
+        "auroc_vs_hardness": auroc_vs_hardness,
+        "hardness_levels": HARDNESS_LEVELS,
         "robustness": robustness,
         "whitebox": whitebox,
     }

@@ -216,6 +216,25 @@ This is the most important honesty point in the project, so it is stated plainly
   detector at the CoT level, with no cross-setting transfer — i.e. what measurement on a hard,
   noisy substrate actually looks like. A synthetic 1.000 is high *because* it is synthetic.
 
+- **Two kinds of difficulty, two different lessons.** The label-noise sweep
+  (`validation.auroc_vs_noise`) flips a fraction of the ground-truth labels; because relabeling
+  caps *any* classifier's achievable AUROC, every probe degrades alike — it measures
+  *sensitivity*, not probe-specific weakness. The **hard-instance substrate**
+  (`validation.auroc_vs_hardness`, `problems.hard_mixed_problems`) instead hardens the *task*: a
+  controlled fraction of instances are constructed so the unfaithful behavior *coincides* with
+  faithful behavior — a **correct hint** (`cue.target == answer`, so SHI's flip test
+  `answer == target ∧ answer != a0` cannot fire: a sycophant adopting a hint that is already
+  right is behaviorally invisible) and an **answer-obvious identity chain**
+  (`start == every stated result == final`, so EAR's empty-prefix guess already matches and
+  reliance is indistinguishable from pre-commitment). SHI and EAR fall toward chance as the hard
+  fraction rises, while **CSC and SIM stay at the ceiling** because their operand-corruption and
+  decoy interventions remain *discriminating* on the very same instances. So the curve measures
+  **differential probe robustness** — which behavioral probes carry intrinsic blind spots — not
+  the uniform degradation a relabeling sweep reports. This is only constructible because the
+  synthetic model is behaviorally *exact*: short chains alone do **not** degrade an exact model
+  (verified — an exact solver separates the classes regardless of chain length), so the honest
+  hard instance is one of *behavioral coincidence*, not merely *fewer steps*.
+
 - **Obfuscated reward hacking (OBF) is an offline known-label *analogue*, not a reproduction.**
   A `p_obfuscate` model coherently concludes a *wrong* answer via a **generic** surface scrub
   (perturb the final operand and re-chain — defined independently of the monitor), so every probe
