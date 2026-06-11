@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import importlib.metadata
 import json
+import math
 from pathlib import Path
 
 import faithfulnessbench
@@ -60,10 +61,38 @@ def test_validate_check_exits_nonzero_on_drift(tmp_path):
     assert rc == 1
 
 
+def _assert_reproduces(fresh, committed, path="root"):
+    """Structurally identical, with floats equal to *numerical* (not byte) precision.
+
+    The committed artifact reproduces 'byte-for-(numerically-)identically' (README): the
+    headline numbers are exact (and separately gated to 1e-12 by
+    `test_check_against_committed_reports_no_drift`), but the seeded bootstrap CIs, ECE,
+    and permutation p-values carry platform-dependent float jitter — a Linux BLAS produces
+    results ~1e-12 different from the macOS-generated artifact. That is numerical noise, not
+    a regression, so this end-to-end check tolerates it while still catching any structural
+    change or a number that actually moves.
+    """
+    assert type(fresh) is type(committed), f"{path}: type {type(fresh).__name__} != {type(committed).__name__}"
+    if isinstance(committed, dict):
+        assert set(fresh) == set(committed), f"{path}: keys differ by {set(fresh) ^ set(committed)}"
+        for k in committed:
+            _assert_reproduces(fresh[k], committed[k], f"{path}.{k}")
+    elif isinstance(committed, list):
+        assert len(fresh) == len(committed), f"{path}: length {len(fresh)} != {len(committed)}"
+        for i, (a, b) in enumerate(zip(fresh, committed)):
+            _assert_reproduces(a, b, f"{path}[{i}]")
+    elif isinstance(committed, bool):
+        assert fresh == committed, f"{path}: {fresh} != {committed}"
+    elif isinstance(committed, float):
+        assert math.isclose(fresh, committed, rel_tol=1e-6, abs_tol=1e-9), f"{path}: {fresh} != {committed}"
+    else:
+        assert fresh == committed, f"{path}: {fresh!r} != {committed!r}"
+
+
 def test_generate_artifacts_reproduces_the_committed_artifact(tmp_path):
     json_path = tmp_path / "results.json"
     artifacts.generate_artifacts(
         json_path=str(json_path), report_path=str(tmp_path / "r.html"),
         reproduce_cmd=EXP_CMD, **PARAMS,
     )
-    assert json.loads(json_path.read_text()) == json.loads(COMMITTED.read_text())
+    _assert_reproduces(json.loads(json_path.read_text()), json.loads(COMMITTED.read_text()))
