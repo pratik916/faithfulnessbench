@@ -11,7 +11,7 @@ This is the cheap, honest answer to "does it generalize beyond linear arithmetic
 framed against FaithCoT-Bench, which finds counterfactual methods succeed on math but fail to
 transfer to knowledge domains: our GSM8K evidence is *in-domain* (still arithmetic) and
 descriptive, so it does not claim cross-domain *validity* transfer. numpy-only; the GSM8K side
-replays offline from the committed cache (a labeled fake until a real recording is swapped in).
+replays offline from the committed real recording (``replay_cache/real_sonnet_gsm8k.json``).
 """
 from __future__ import annotations
 

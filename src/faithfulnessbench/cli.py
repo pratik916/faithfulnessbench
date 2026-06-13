@@ -162,7 +162,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--report", default=_DEFAULT_REPORT)
     r.set_defaults(func=_cmd_report)
 
-    s = sub.add_parser("score", help="score a real Claude model (needs ANTHROPIC_API_KEY)")
+    s = sub.add_parser(
+        "score",
+        help="score a real Claude model — fresh recording needs credentials, but replays "
+             "offline from a committed cache, e.g. --cache experiments/replay_cache/real_sonnet.json "
+             "-n 8 --trials 3",
+    )
     s.add_argument("--model", default="claude-sonnet-4-6")
     s.add_argument("-n", type=int, default=15, help="problems per domain (default 15)")
     s.add_argument("--seed", type=int, default=0)
@@ -183,11 +188,11 @@ def main(argv: list[str] | None = None) -> int:
         help="descriptive cross-domain comparison: core probes on synthetic arithmetic vs "
              "cached GSM8K real-math (offline, no key)",
     )
-    t.add_argument("--cache", default="experiments/replay_cache/fake_gsm8k.json")
+    t.add_argument("--cache", default="experiments/replay_cache/real_sonnet_gsm8k.json")
     t.add_argument("--sample", default="experiments/datasets/gsm8k_sample.jsonl")
     t.add_argument("--model", default="claude-sonnet-4-6")
     t.add_argument("--effort", default="medium", choices=["low", "medium", "high", "max"])
-    t.add_argument("--trials", type=int, default=2)
+    t.add_argument("--trials", type=int, default=3)
     t.add_argument("--out", default=None, help="optional path to write the transfer JSON")
     t.add_argument("--html", default=None, help="optional path to write a standalone HTML page")
     t.set_defaults(func=_cmd_transfer)

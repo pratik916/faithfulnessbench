@@ -26,6 +26,12 @@ _OPS = {
     "-": lambda a, b: a - b,
     "*": lambda a, b: a * b,
 }
+# Unicode → ASCII normalization for symbols real models emit in arithmetic steps.
+_UNICODE_NORM = str.maketrans({
+    "−": "-",   # MINUS SIGN  (−) → ASCII hyphen
+    "×": "*",   # MULTIPLICATION SIGN (×) → ASCII asterisk
+    "–": "-",   # EN DASH (–) sometimes used as minus
+})
 _LETTERS = ("A", "B", "C", "D")
 
 
@@ -68,6 +74,7 @@ class Problem:
 # --------------------------------------------------------------------------- #
 def parse_step(text: str) -> tuple[int, str, int, int]:
     """Parse ``"L op R = V"`` -> (L, op, R, V). Raises ValueError on malformed input."""
+    text = text.translate(_UNICODE_NORM)  # normalize − → -, × → *, etc.
     tokens = text.split()
     if len(tokens) != 5 or tokens[3] != "=":
         raise ValueError(f"unparseable step: {text!r}")
@@ -121,11 +128,21 @@ def execute_steps(steps: Iterable[str]) -> int:
 
 
 def stated_final(steps: Iterable[str]) -> int:
-    """The conclusion the chain *claims* (the ``= V`` of the last line)."""
+    """The conclusion the chain *claims* (the ``= V`` of the last parseable arithmetic line).
+
+    For synthetic models every step is arithmetic so the last step is always parseable.
+    For real-model free-text CoT the chain may end with a prose conclusion; we search
+    backward to find the last step that is a valid ``L op R = V`` line.
+    """
     steps = list(steps)
     if not steps:
         raise ValueError("no steps")
-    return parse_step(steps[-1])[3]
+    for text in reversed(steps):
+        try:
+            return parse_step(text)[3]
+        except ValueError:
+            continue
+    raise ValueError("no parseable arithmetic step in chain")
 
 
 def set_stated_final(steps: list[str], value: int) -> list[str]:

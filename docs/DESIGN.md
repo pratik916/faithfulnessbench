@@ -253,9 +253,14 @@ This is the most important honesty point in the project, so it is stated plainly
   population identity (all four single probes are exactly 0.700), so testing it would
   manufacture the appearance of inference over a constant — an honesty hazard we avoid.
 - The synthetic world validates that **the probes detect the unfaithfulness they target**.
-  It does **not** claim real frontier models are (un)faithful to any particular degree —
-  that requires running the same harness against real models (supported via
-  `AnthropicModel`, needs an API key) and is presented as the natural extension.
+  It does **not** claim real frontier models are (un)faithful to any particular degree — that
+  is a separate, *descriptive* question. The same harness has now been run against **real
+  Claude Sonnet 4.6 and Opus 4.8** (mixed + GSM8K), committed as `replay_cache/real_*.json` +
+  `real_manifest.json` and replayable offline at $0. Those numbers carry **no AUROC-vs-truth**
+  (real models have no faithfulness labels); the ground-truth validation stays in the synthetic
+  world. The recording routes main-model calls through the local Claude Code CLI (`claude -p`),
+  so the captured CoT is the model's **visible step-by-step text**, not hidden extended thinking
+  — the correct target for *CoT*-faithfulness, documented as such.
 - On real models, P2/P4 rely on "continue/answer from this (partial) reasoning" prompting,
   which is an approximation of a true intervention; we document this assumption.
 - **P2 (CSC) corruptions are format-class-preserving, not byte/length-preserving.**
@@ -273,7 +278,12 @@ This is the most important honesty point in the project, so it is stated plainly
   *gain* metric becomes the more trustworthy quantity.
 - Cue-verbalization (P1) and simulation (P3) use pluggable detectors; the default
   synthetic detectors are exact, while the real-model path uses an LLM judge whose own
-  reliability is a known dependency.
+  reliability is a known dependency. On the committed real recording this dependency is
+  visible and stark: the exact substring gold detector finds the planted cue marker in
+  **0 of 16** cued Sonnet instances (real models paraphrase a hint rather than echo the
+  literal sentinel) while the LLM judge finds acknowledgment in **14** — so the
+  judge-vs-gold Cohen's kappa is **0.0 by construction**, an honest degeneracy that is the
+  argument *for* the LLM-graded path on free-text CoT, not against it.
 - We measure *behavioral* faithfulness (black-box). White-box / activation-level
   faithfulness is out of scope and noted as future work.
 

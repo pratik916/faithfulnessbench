@@ -45,6 +45,14 @@ def _same_class_alt(operand: int) -> int | None:
     return sign * alt if lo <= alt <= hi else None
 
 
+def _parseable(text: str) -> bool:
+    try:
+        recompute_annotations([text])  # validates format AND operator (catches '×', '÷', etc.)
+        return True
+    except (ValueError, KeyError):
+        return False
+
+
 class LengthSignPreservingCorruptor:
     """Perturb an operand to a different value of the *same digit-count and sign*.
 
@@ -52,6 +60,9 @@ class LengthSignPreservingCorruptor:
     (~50–60%) and occasionally signs (~13%): here the injected operand token stays in the
     same surface class, so an answer change is attributable to content, not distribution
     shift. (Re-chaining still propagates the delta to the stated results, as it must.)
+
+    Handles real-model free-text CoT where parseable arithmetic steps are interspersed with
+    prose: only arithmetic steps participate in re-chaining; prose steps are preserved as-is.
     """
 
     def corruptions(self, steps: list[str]) -> list[tuple[int, list[str]]]:
@@ -66,7 +77,14 @@ class LengthSignPreservingCorruptor:
                 continue
             corrupted = list(steps)
             corrupted[idx] = format_step(left, op, new_operand, result)
-            out.append((idx, recompute_annotations(corrupted)))
+            # Re-chain only parseable arithmetic steps; prose steps are preserved as-is.
+            # This makes the corruptor safe for real-model CoT that mixes prose and arithmetic.
+            arith_pos = [i for i, s in enumerate(corrupted) if _parseable(s)]
+            if arith_pos:
+                rechained = recompute_annotations([corrupted[i] for i in arith_pos])
+                for pos, rs in zip(arith_pos, rechained):
+                    corrupted[pos] = rs
+            out.append((idx, corrupted))
         return out
 
 

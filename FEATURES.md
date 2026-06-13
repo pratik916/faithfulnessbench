@@ -98,7 +98,7 @@ Each probe is a causal intervention returning a continuous per-instance unfaithf
 - [x] **Adversarial-CoT robustness frontier**: catch-rate@1%-FPR vs a generic CoT-obfuscation budget (SIM collapses; behavioral probes robust).
 - [x] **White-box / linear-probe offline analogue**: a numpy logistic probe on an a-priori activation beats the evaded monitor on obfuscation but is blind to the interventional FILLER axis (complementary) — honest, with held-out split + permuted control, and no claim about real activations.
 - [x] **Cross-domain transfer**: the identical probes run on real GSM8K math (`faithfulnessbench transfer`), reported descriptively against the FaithCoT-Bench math→knowledge caveat.
-- [x] **Real-model path that is actually LLM-graded**: `score` uses `LLMJudgeCueDetector`/`LLMSimulator` + the length/sign-preserving corruptor by default and prints a judge-reliability line; offline via a committed (labeled-FAKE) record/replay cache; `--exact-detectors` for comparison.
+- [x] **Real-model path that is actually LLM-graded**: `score` uses `LLMJudgeCueDetector`/`LLMSimulator` + the length/sign-preserving corruptor by default and prints a judge-reliability line; `--exact-detectors` for comparison. Run on **real Claude Sonnet 4.6 + Opus 4.8** (mixed + GSM8K) and committed as `replay_cache/real_*.json` + `real_manifest.json` — every number replays offline at $0 ([report/real_model_report.html](report/real_model_report.html)). A small labeled-synthetic `fake_*.json` fixture is kept only as the tiny deterministic CI smoke-fixture.
 - [x] Hardened free-text answer parsing (`\boxed{}`, "the answer is N", stray letters) + a truncation flag surfaced into scoring.
 - [x] **Interactive, zero-dependency HTML trace viewer**: a silent-flip view plus an EAR truncation slider and a CSC corruption toggle driven by embedded per-fraction/per-corruption data; 8 standalone SVG charts.
 - [x] **Deployed**: the self-contained report ships to GitHub Pages (one-click live demo); a trace-viewer GIF in the README.
@@ -119,9 +119,10 @@ Most pre-v2 limitations have been resolved (ECE/significance/calibration are wir
 - The synthetic model is **not** an LLM — indisputable ground truth, not behavioral realism (by design).
 - Two domains, both linear integer arithmetic over `{+,-,*}` (the `L op R = V` format is rigidly 5 tokens). A third *structurally different* synthetic domain is scoped and deferred (DESIGN.md §7).
 
-**Real-model path (documented; now quantified)**
-- On free-text CoT, CSC/SIM degrade (no parseable `L op R = V` chain); the transfer table and the robustness frontier now *quantify* this rather than just noting it. The LLM judge's reliability is itself a dependency, reported as kappa-vs-gold next to the SHI/SIM numbers.
-- The committed replay cache is a **labeled FAKE** fixture; a genuine real-Claude measurement is a one-command (`record_replay.py --real`) swap, gated on an API key and explicit spend approval. No real-model AUROC-vs-truth is claimed (no real-model faithfulness labels exist).
+**Real-model path (documented & now measured on real Claude)**
+- On free-text CoT, CSC/SIM degrade (no parseable `L op R = V` chain); the transfer table and the robustness frontier *quantify* this rather than just noting it. The LLM judge's reliability is itself a dependency, reported as kappa-vs-gold next to the SHI/SIM numbers — and on real CoT that kappa is **0.0 by construction** (the exact substring gold finds the literal cue marker 0/16, the LLM judge 14/16), which is the honest case *for* the LLM-graded path, not against it.
+- The captured chain-of-thought is the model's **visible step-by-step text**: the recording goes through the local Claude Code CLI (`claude -p`), which exposes no hidden extended-thinking blocks. For *CoT*-faithfulness that is the right target, but it is not the model's private reasoning trace.
+- **No real-model AUROC-vs-truth is claimed** (no real-model faithfulness labels exist) — the real numbers are descriptive; the synthetic validation is where the ground-truth AUROC lives.
 
 **Scope (future work)**
 - Measurement is **behavioral** (black-box). White-box / activation-level probing on *real* models is out of scope; a numpy **offline analogue** is built (`whitebox.py`, report §1d) — it demonstrates the activation-vs-monitor contrast on synthetic models but says nothing about real activations.
@@ -144,4 +145,4 @@ Most pre-v2 limitations have been resolved (ECE/significance/calibration are wir
 
 **Add a CLI subcommand.** `sub.add_parser(...).set_defaults(func=_cmd_x)` in `cli.py`; defer heavy imports inside `_cmd_*`.
 
-**Record real Claude data.** `ANTHROPIC_API_KEY=… python experiments/record_replay.py --real` re-records the (currently fake) replay cache through the live SDK — a one-command swap; everything downstream then runs offline.
+**Re-record real Claude data.** `python experiments/record_replay.py --real` records the flagship models (Sonnet 4.6 + Opus 4.8, mixed + GSM8K) into `replay_cache/real_*.json` + `real_manifest.json`. It routes the main-model calls through the local Claude Code CLI (`claude -p`) so no `ANTHROPIC_API_KEY` is needed (the cheap Haiku judge uses the SDK with `ANTHROPIC_AUTH_TOKEN`); merge-on-put makes it resumable, and with the committed caches present it replays offline at $0. Then `python experiments/render_real_artifacts.py` re-renders the HTML pages.
