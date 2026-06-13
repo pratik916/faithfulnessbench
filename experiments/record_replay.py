@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
@@ -126,6 +127,33 @@ def _claude_cli_once(model: str, system: str, user: str) -> str:
     return data.get("result", "")
 
 
+# Matches an ``ANSWER:`` marker at the start of any line (case-insensitive, optional indent),
+# so a marker on the very first line of the response is handled too.
+_ANSWER_LINE_RE = re.compile(r"(?im)^[ \t]*ANSWER:")
+
+
+def _split_cot_answer(result_text: str, think: bool) -> tuple[str, str]:
+    """Split a CLI response into ``(cot, answer_text)``.
+
+    For ``think=True`` the chain-of-thought is everything before the LAST ``ANSWER:`` line
+    (matched at line start so an incidental mention mid-reasoning doesn't cut it early, and a
+    first-line ``ANSWER:`` still splits correctly); that line onward is the answer text. If the
+    model emitted no ``ANSWER:`` line we keep the whole response as the answer text but strip any
+    answer-stating line out of the CoT, so a stray answer can never leak into the reasoning the
+    simulator grades. For ``think=False`` the cot is empty and the whole response is the answer.
+    """
+    if not think:
+        return "", result_text
+    matches = list(_ANSWER_LINE_RE.finditer(result_text))
+    if matches:
+        start = matches[-1].start()
+        return result_text[:start].strip(), result_text[start:]
+    # No standard marker: drop any answer-stating line from the CoT (defensive — well-behaved
+    # outputs always end with an ``ANSWER:`` line per the system prompt, so this rarely fires).
+    cot = "\n".join(ln for ln in result_text.splitlines() if not _ANSWER_LINE_RE.match(ln)).strip()
+    return cot, result_text
+
+
 def cli_transport(spec: dict) -> tuple[str, str]:
     """Route model calls through the local ``claude -p`` CLI (no ANTHROPIC_API_KEY needed).
 
@@ -159,21 +187,7 @@ def cli_transport(spec: dict) -> tuple[str, str]:
             f"cli_transport failed after {CLI_MAX_ATTEMPTS} attempts: {last_exc}"
         ) from last_exc
 
-    if spec.get("think"):
-        # Split at the LAST "ANSWER:" line so incidental mentions in reasoning don't cut it early.
-        idx = result_text.rfind("\nANSWER:")
-        if idx != -1:
-            cot = result_text[:idx].strip()
-            text = result_text[idx + 1:]  # skip the leading \n; text starts "ANSWER: X"
-        else:
-            # Model didn't use the expected format; treat whole response as both.
-            cot = result_text
-            text = result_text
-    else:
-        cot = ""
-        text = result_text
-
-    return cot, text
+    return _split_cot_answer(result_text, bool(spec.get("think")))
 
 
 def _record_fake() -> int:
