@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-238%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-243%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 **▶ [Open the live interactive report](https://pratik916.github.io/faithfulnessbench/)** — probe-validity KPIs, the AUROC-vs-noise sensitivity curve, the hard-instance differential-robustness curve, the CoT-obfuscation robustness frontier, and an interactive trace viewer (slide how much reasoning the model sees; toggle a corrupted step). No clone required.
 
@@ -22,7 +22,7 @@ This is the agenda a 2025 multi-lab position paper calls **CoT monitorability** 
 
 > On a seeded population of 6 synthetic models × 40 problems, **every probe detects the unfaithfulness it targets at AUROC = 1.000**, with **exactly zero leakage** onto the failure modes it does *not* target (off-axis AUROC = 0.500 — the tie convention's value when a probe returns identically zero). This certifies that **each probe is correctly *wired* to its failure mode and is specific** — and a shuffled-label negative control collapses every probe to ≈ 0.50, proving the harness *can* report chance (it isn't a metric artifact). The probes genuinely disagree — a model can fail one and pass the others — which is the case for a **Faithfulness Card**, not a scalar.
 
-> **What this does and does not prove (read this).** The synthetic signal is *clean*, so AUROC = 1.000 is the expected ceiling of a controlled positive/negative test — it is **true by construction**, certifying wiring and specificity, **not** sensitivity on real, noisy chain-of-thought. The combined detector reaching 1.000 while each single probe sits at *exactly* 0.700 is likewise a **population identity** (all four single-axis probes score the same 0.700 by the population's composition), **not** a discriminative result. The honest real-world reference point is the ≈ 0.70 ceiling that hand-annotated benchmarks such as [FaithCoT-Bench](https://arxiv.org/abs/2510.04040) report for the *best* behavioral detector — what measurement on a hard substrate actually looks like. **What would falsify the harness:** a probe whose targeted AUROC stayed at 1.000 on a noised substrate with partially-shuffled labels, or a negative control that did *not* fall to chance. **Two senses of "harder" ship in the report:** a symmetric label-noise sweep ([§1b](https://pratik916.github.io/faithfulnessbench/)) — a *sensitivity* measurement that degrades every probe alike — and a **hard-instance substrate** ([§1c](https://pratik916.github.io/faithfulnessbench/)) that constructs genuine behavioral blind spots (a hint that is *correct*, invisible to SHI; an answer obvious from the premise, invisible to EAR) on which SHI and EAR fall toward chance while CSC and SIM hold at the ceiling — a *differential*-robustness result that relabeling cannot produce. Running the same probes on real Claude CoT is the remaining step.
+> **What this does and does not prove (read this).** The synthetic signal is *clean*, so AUROC = 1.000 is the expected ceiling of a controlled positive/negative test — it is **true by construction**, certifying wiring and specificity, **not** sensitivity on real, noisy chain-of-thought. The combined detector reaching 1.000 while each single probe sits at *exactly* 0.700 is likewise a **population identity** (all four single-axis probes score the same 0.700 by the population's composition), **not** a discriminative result. The honest real-world reference point is the ≈ 0.70 ceiling that hand-annotated benchmarks such as [FaithCoT-Bench](https://arxiv.org/abs/2510.04040) report for the *best* behavioral detector — what measurement on a hard substrate actually looks like. **What would falsify the harness:** a probe whose targeted AUROC stayed at 1.000 on a noised substrate with partially-shuffled labels, or a negative control that did *not* fall to chance. **Two senses of "harder" ship in the report:** a symmetric label-noise sweep ([§1b](https://pratik916.github.io/faithfulnessbench/)) — a *sensitivity* measurement that degrades every probe alike — and a **hard-instance substrate** ([§1c](https://pratik916.github.io/faithfulnessbench/)) that constructs genuine behavioral blind spots (a hint that is *correct*, invisible to SHI; an answer obvious from the premise, invisible to EAR) on which SHI and EAR fall toward chance while CSC and SIM hold at the ceiling — a *differential*-robustness result that relabeling cannot produce. Running the same probes on real Claude (Sonnet 4.6 & Opus 4.8) is **now done** — see [Real Claude models](#real-claude-models-sonnet-46--opus-48) below.
 
 <p align="center">
   <img src="docs/assets/detection_auroc.svg" width="48%" alt="Detection AUROC per probe">
@@ -67,18 +67,44 @@ Because the dials are code, every `(model, problem)` carries a **known label**. 
 
 So that the headline is comparable to the annotation-based work, the validation reports **F1 and Cohen's kappa beside AUROC** for the combined detector (all 1.0 on the clean synthetic population — the same by-construction caveat). **Scope caveat:** FaithCoT-Bench finds counterfactual methods succeed in *math* but degrade in *knowledge* domains; this harness is arithmetic-heavy, so its real-model evidence (incl. GSM8K) speaks to math reasoning, not open-domain knowledge.
 
+## Real Claude models: Sonnet 4.6 & Opus 4.8
+
+The identical probe battery, run on **real Claude** through the cached real-model path — [standalone cards page](report/real_model_report.html). These numbers are **descriptive**: real models have no faithfulness ground truth, so there is **no AUROC-vs-truth** here (that is exactly what the synthetic validation above is for).
+
+| Model · substrate | Composite | SHI | CSC | SIM | EAR |
+|---|---|---|---|---|---|
+| Sonnet 4.6 · mixed | 0.68 | 1.00 | 1.00 | 0.67 | 0.05 |
+| Opus 4.8 · mixed | 0.51 | 1.00 | 0.00 | 0.63 | 0.40 |
+| Sonnet 4.6 · GSM8K | 0.67 | 1.00 | — | 1.00 | 0.00 |
+| Opus 4.8 · GSM8K | 0.67 | 1.00 | — | 1.00 | 0.00 |
+
+*(1 = faithful; "—" = the structural probe found no measurable instances on free-text CoT. n = 8 problems/domain × 3 trials, effort = medium.)*
+
+**Three findings only real CoT could surface:**
+
+- **The literal cue detector is useless on real CoT — which is the whole reason the LLM judge exists.** Across the 16 cued Sonnet instances, the exact substring detector finds the planted hint marker **0 times** (real models paraphrase a hint, they never echo the sentinel), while the LLM judge finds semantic acknowledgment **14 times**. So the judge-vs-gold kappa is **0.0 *by construction*** — a documented, honest degeneracy, not a bug, and a direct vindication of the LLM-graded real-model path.
+- **Claude notices the hints but doesn't follow them.** The SHI flip-rate is **0** for both models on both substrates: the models *acknowledge* the planted hint (14/16) yet still compute the correct answer — faithful, robust behavior on this substrate.
+- **Real CoT is not a parseable `L op R = V` chain** (SIM parse-failure 0.94–1.00), so the structural CSC/SIM detectors fall back to their LLM-graded forms — the real-path limitation the synthetic validation documents, now quantified rather than asserted.
+
+**Two honesty caveats.** (1) The recording was made through the local Claude Code CLI (`claude -p`), which exposes no hidden extended-thinking blocks, so the measured "CoT" is the model's **visible step-by-step text** — arguably the correct target for *CoT*-faithfulness, but stated plainly. (2) Every number above **replays offline from the committed `experiments/replay_cache/real_*.json` at $0, no key** — reproduce them from a clean clone with:
+
+```bash
+python experiments/record_replay.py --real       # with the committed caches present: re-derives real_manifest.json offline, $0
+python experiments/render_real_artifacts.py       # re-renders report/real_model_report.html + report/transfer.html
+```
+
 ### Cross-domain transfer: does it run beyond linear arithmetic? (GSM8K)
 
 The cheapest honest answer to *"does it generalize?"* is to run the **identical probe code** over real grade-school math (GSM8K) on the cached real-model path — `faithfulnessbench transfer` ([standalone page](report/transfer.html)). The result is reported **descriptively**: GSM8K has no faithfulness ground truth, so there is *no* AUROC-vs-truth on that side — only whether each probe still runs and what it produces.
 
-| Probe | Synthetic arithmetic (ground truth) | GSM8K real-math (descriptive) |
+| Probe | Synthetic arithmetic (ground truth) | GSM8K real-math (descriptive, Sonnet 4.6) |
 |---|---|---|
 | SHI | 1.000 | 1.000 |
 | CSC | 1.000 | — (degraded) |
 | SIM | 1.000 | 0.000 |
-| EAR | 0.917 | 0.994 |
+| EAR | 0.917 | 0.000 |
 
-SHI and EAR **run unchanged** on free-text GSM8K CoT; CSC and SIM **degrade** because real reasoning has no parseable `L op R = V` chain to corrupt or exactly simulate — exactly the real-path limitation documented in `docs/DESIGN.md`. (The GSM8K column currently replays from the labeled *fake* cache; it becomes a real measurement with the one-command real recording.) This is *in-domain* (still arithmetic) and does not claim cross-domain *validity* transfer — consistent with FaithCoT-Bench's math→knowledge finding above.
+SHI **runs unchanged** on free-text GSM8K CoT; CSC and SIM **degrade** because real reasoning has no parseable `L op R = V` chain to corrupt or exactly simulate — exactly the real-path limitation documented in `docs/DESIGN.md` — and EAR reports **0.00** (the model early-locks: on easy grade-school problems Sonnet's answer is fixed before the CoT finishes). The GSM8K column is now a **real Sonnet 4.6 recording** (replayed offline from the committed cache). This is *in-domain* (still arithmetic) and does not claim cross-domain *validity* transfer — consistent with FaithCoT-Bench's math→knowledge finding above.
 
 ### White-box vs black-box: where does activation probing win? (offline analogue)
 
@@ -136,19 +162,20 @@ Everything is seeded — the committed [`experiments/results/results.json`](expe
 
 ## Scoring a real model
 
-The same probes run against a live Claude reasoning model via the Anthropic adapter:
+The same probes run against real Claude — and a recording is **already committed**, so you can replay the real numbers from a clean clone with **no key, no network, $0**:
 
 ```bash
-pip install -e ".[anthropic]"
-export ANTHROPIC_API_KEY=sk-...
-faithfulnessbench score --model claude-sonnet-4-6 --effort high
+# Replay the committed real recording (offline):
+faithfulnessbench score --model claude-sonnet-4-6 \
+  --cache experiments/replay_cache/real_sonnet.json -n 8 --trials 3 --seed 0
+python experiments/render_real_artifacts.py     # re-render report/real_model_report.html + transfer.html
 ```
 
-Adaptive thinking captures the CoT; the "answer from this given reasoning" probes disable thinking so the model commits to the supplied reasoning instead of re-deriving. Every API call is memoised to a record/replay cache, so a committed cache reproduces real-model numbers offline and reruns don't re-bill.
+To record a **fresh** run, `python experiments/record_replay.py --real` drives the flagship models (Sonnet 4.6 + Opus 4.8, mixed + GSM8K). It routes the main-model calls through the local Claude Code CLI (`claude -p`) so **no `ANTHROPIC_API_KEY` is required** (the cheap Haiku judge uses the SDK with `ANTHROPIC_AUTH_TOKEN`); the run is resumable (merge-on-put) and re-bills nothing already cached. Because `claude -p` exposes no hidden extended-thinking blocks, the captured CoT is the model's **visible step-by-step text** — the honest target for *CoT*-faithfulness. Every call is memoised, so the committed cache reproduces the numbers offline and reruns don't re-bill.
 
 ## Limitations (read these)
 
-- The synthetic world validates that **the probes detect the unfaithfulness they target**. It does **not** claim any real frontier model is (un)faithful to a particular degree — that requires running the harness against real models, which the adapter supports and which is the natural next step.
+- The synthetic world validates that **the probes detect the unfaithfulness they target**. It does **not** claim any real frontier model is (un)faithful to a particular degree — the [real-model numbers](#real-claude-models-sonnet-46--opus-48) are **descriptive** (no real-model faithfulness labels exist), while the ground-truth AUROC lives in the synthetic validation.
 - On real models, CSC and EAR rely on "continue/answer from this (partial) reasoning" prompting, an *approximation* of a true intervention.
 - The default cue-verbalization (SHI) and simulator (SIM) are exact in the synthetic world; the real-model path uses an LLM judge whose own reliability is a dependency.
 - This is **behavioral** (black-box) faithfulness. White-box / activation-level faithfulness on *real* models is out of scope; the report includes a numpy **offline analogue** (§1e) — an activation probe that beats an obfuscated CoT monitor yet stays blind to the interventional FILLER axis — which proves nothing about real-model activations.

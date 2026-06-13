@@ -3,7 +3,9 @@
 Descriptive only — GSM8K has no faithfulness ground truth, so there is NO AUROC-vs-truth on
 that side. The honest finding is that the identical probe code runs unchanged on GSM8K, with
 CSC/SIM degrading on free-text CoT (the documented real-path limit), framed against
-FaithCoT-Bench's math→knowledge non-transfer result. Runs offline from the labeled-fake cache.
+FaithCoT-Bench's math→knowledge non-transfer result. This file exercises the mechanism on the
+tiny synthetic fixture; the real-GSM8K transfer (the committed transfer.html source) is covered
+in test_real_recording.py.
 """
 from __future__ import annotations
 

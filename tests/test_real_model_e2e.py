@@ -1,8 +1,10 @@
-"""End-to-end real-model score path, replayed offline from a committed FAKE cache (fb-0nc.5).
+"""End-to-end real-model score path, replayed offline from the tiny synthetic fixture (fb-0nc.5).
 
-The cache is a deterministic fixture, NOT real Claude data (see experiments/record_replay.py);
-swapping in a real recording is one command with a key. This proves the identical probe code
-runs through the Anthropic adapter with no key and no SDK.
+This uses the small deterministic ``fake_*.json`` fixture (made-up CoT, n=2) as a fast,
+byte-stable smoke test that the identical probe code runs through the Anthropic adapter with no
+key and no SDK. The *real* Claude measurement lives in ``replay_cache/real_*.json`` and is
+exercised by ``test_real_recording.py``; this file deliberately stays on the tiny fixture so the
+core suite is fast and needs no large caches.
 """
 from __future__ import annotations
 
