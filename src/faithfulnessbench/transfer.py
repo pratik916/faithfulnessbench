@@ -68,7 +68,7 @@ def build_gsm8k_transfer(
     gsm8k_sample,
     model: str = "claude-sonnet-4-6",
     effort: str = "medium",
-    n_trials: int = 2,
+    n_trials: int = 3,
     n_synth: int = 6,
     seed: int = 0,
 ) -> dict:

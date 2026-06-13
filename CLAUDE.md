@@ -12,7 +12,7 @@ A `.venv/` is checked out; prefix commands with `.venv/bin/` (or activate it). `
 
 ```bash
 pip install -e ".[dev]"                         # install with test/lint deps
-pytest                                           # full suite (243 tests, no network/key; 1 skips when anthropic is installed)
+pytest                                           # full suite (244 tests, no network/key; 1 skips when anthropic is installed)
 pytest tests/test_probes.py -q                   # one file
 pytest tests/test_metrics.py::test_auc_known_value  # one test
 ruff check src tests experiments tools           # lint (CI-gated)

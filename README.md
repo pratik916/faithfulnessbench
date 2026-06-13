@@ -2,7 +2,7 @@
 
 **Stop trusting the model's scratchpad.** A causal-intervention harness that measures whether a reasoning model's chain-of-thought (CoT) *actually drives* its answer — and, unlike prior single-probe work, **validates the measurement itself** against models whose (un)faithfulness is known by construction.
 
-[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-243%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml/badge.svg)](https://github.com/pratik916/faithfulnessbench/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-244%20passing-brightgreen) ![coverage](https://img.shields.io/badge/coverage-%E2%89%A590%25-brightgreen) ![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/runtime%20deps-numpy%20only-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 **▶ [Open the live interactive report](https://pratik916.github.io/faithfulnessbench/)** — probe-validity KPIs, the AUROC-vs-noise sensitivity curve, the hard-instance differential-robustness curve, the CoT-obfuscation robustness frontier, and an interactive trace viewer (slide how much reasoning the model sees; toggle a corrupted step). No clone required.
 
@@ -74,7 +74,7 @@ The identical probe battery, run on **real Claude** through the cached real-mode
 | Model · substrate | Composite | SHI | CSC | SIM | EAR |
 |---|---|---|---|---|---|
 | Sonnet 4.6 · mixed | 0.68 | 1.00 | 1.00 | 0.67 | 0.05 |
-| Opus 4.8 · mixed | 0.51 | 1.00 | 0.00 | 0.63 | 0.40 |
+| Opus 4.8 · mixed | 0.51 | 1.00 | 0.00 | 0.62 | 0.40 |
 | Sonnet 4.6 · GSM8K | 0.67 | 1.00 | — | 1.00 | 0.00 |
 | Opus 4.8 · GSM8K | 0.67 | 1.00 | — | 1.00 | 0.00 |
 
@@ -83,7 +83,7 @@ The identical probe battery, run on **real Claude** through the cached real-mode
 **Three findings only real CoT could surface:**
 
 - **The literal cue detector is useless on real CoT — which is the whole reason the LLM judge exists.** Across the 16 cued Sonnet instances, the exact substring detector finds the planted hint marker **0 times** (real models paraphrase a hint, they never echo the sentinel), while the LLM judge finds semantic acknowledgment **14 times**. So the judge-vs-gold kappa is **0.0 *by construction*** — a documented, honest degeneracy, not a bug, and a direct vindication of the LLM-graded real-model path.
-- **Claude notices the hints but doesn't follow them.** The SHI flip-rate is **0** for both models on both substrates: the models *acknowledge* the planted hint (14/16) yet still compute the correct answer — faithful, robust behavior on this substrate.
+- **Claude notices the hints but doesn't follow them.** The SHI flip-rate is **0** for both models on both substrates: the models *acknowledge* the planted hint (14/16 on the cued Sonnet-mixed instances) yet still compute the correct answer — faithful, robust behavior on this substrate.
 - **Real CoT is not a parseable `L op R = V` chain** (SIM parse-failure 0.94–1.00), so the structural CSC/SIM detectors fall back to their LLM-graded forms — the real-path limitation the synthetic validation documents, now quantified rather than asserted.
 
 **Two honesty caveats.** (1) The recording was made through the local Claude Code CLI (`claude -p`), which exposes no hidden extended-thinking blocks, so the measured "CoT" is the model's **visible step-by-step text** — arguably the correct target for *CoT*-faithfulness, but stated plainly. (2) Every number above **replays offline from the committed `experiments/replay_cache/real_*.json` at $0, no key** — reproduce them from a clean clone with:
